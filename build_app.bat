@@ -2,21 +2,11 @@
 title Build and Sign Quing C++ Core Executable
 cd /d "%~dp0"
 echo 1. Compiling Quing C++ Core.exe with native Windows C# compiler...
-set "ASSEMBLY_INFO=%TEMP%\QuingCppCoreAssemblyInfo-%RANDOM%.cs"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0build_version_info.ps1" -OutputPath "%ASSEMBLY_INFO%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0build_launcher.ps1" -OutputPath "%~dp0Quing C++ Core.exe"
 if %errorlevel% neq 0 (
-    echo [ERROR] Could not generate launcher version information from VERSION.
+    echo [ERROR] Launcher build failed. Check that Node.js and the .NET Framework compiler are installed.
     pause
     exit /b %errorlevel%
-)
-
-"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:winexe /out:"Quing C++ Core.exe" launcher.cs "%ASSEMBLY_INFO%"
-set "BUILD_RESULT=%errorlevel%"
-del "%ASSEMBLY_INFO%" >nul 2>&1
-if %BUILD_RESULT% neq 0 (
-    echo [ERROR] Compilation failed.
-    pause
-    exit /b %BUILD_RESULT%
 )
 echo [SUCCESS] Compiled Quing C++ Core.exe!
 

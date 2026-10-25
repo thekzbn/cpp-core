@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Net;
 using System.Threading;
 using System.Windows.Forms;
@@ -13,41 +14,30 @@ namespace Quing.Learn
         [STAThread]
         static void Main()
         {
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string serverScript = Path.Combine(baseDir, "dev_server.js");
-
-            if (!File.Exists(serverScript))
+            string baseDir;
+            try
+            {
+                baseDir = EnsureEmbeddedAppFiles();
+            }
+            catch (Exception ex)
             {
                 MessageBox.Show(
-                    "dev_server.js was not found in the application directory:\n" + baseDir,
+                    "Quing C++ Core could not prepare its built-in app files.\n\n" + ex.Message,
                     "Quing learn — C++ Core",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
+                    MessageBoxIcon.Error
                 );
                 return;
             }
+
+            string serverScript = Path.Combine(baseDir, "dev_server.js");
+            string nodeExe = Path.Combine(baseDir, "node.exe");
 
             // 1. Check if server is already responding
             bool serverReady = IsServerResponding("http://localhost:8000/api/status");
 
             if (!serverReady)
             {
-                string nodeExe = "node";
-                string[] nodeCandidates = new string[]
-                {
-                    @"C:\Program Files\nodejs\node.exe",
-                    @"C:\Program Files (x86)\nodejs\node.exe",
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\nodejs\node.exe")
-                };
-                foreach (string np in nodeCandidates)
-                {
-                    if (File.Exists(np))
-                    {
-                        nodeExe = np;
-                        break;
-                    }
-                }
-
                 ProcessStartInfo serverPsi = new ProcessStartInfo
                 {
                     FileName = nodeExe,
@@ -65,7 +55,7 @@ namespace Quing.Learn
                 catch (Exception ex)
                 {
                     MessageBox.Show(
-                        "Unable to launch companion server with Node.js.\n\nError: " + ex.Message + "\n\nPlease ensure Node.js is installed.",
+                        "Unable to launch the built-in companion server.\n\nError: " + ex.Message,
                         "Quing learn — Companion Server",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error
@@ -144,6 +134,77 @@ namespace Quing.Learn
             }
         }
 
+        static string EnsureEmbeddedAppFiles()
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            Version version = assembly.GetName().Version;
+            string versionText = version != null ? version.ToString() : "0.0.0.0";
+            string appDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Quing",
+                "C++ Core",
+                versionText
+            );
+            string marker = Path.Combine(appDir, ".payload-ready");
+            string[] resources = new string[]
+            {
+                "payload.index.html",
+                "payload.style.css",
+                "payload.app.js",
+                "payload.lessons.js",
+                "payload.simulator.js",
+                "payload.dev_server.js",
+                "payload.node.exe",
+                "payload.fonts.InterVariable.ttf",
+                "payload.fonts.InterVariable-Italic.ttf",
+                "payload.fonts.Inter.ttc",
+                "payload.fonts.JetBrainsMono-VariableFont_wght.ttf",
+                "payload.fonts.JetBrainsMono-Italic-VariableFont_wght.ttf"
+            };
+            string[] relativePaths = new string[]
+            {
+                "index.html",
+                "style.css",
+                "app.js",
+                "lessons.js",
+                "simulator.js",
+                "dev_server.js",
+                "node.exe",
+                "fonts/InterVariable.ttf",
+                "fonts/InterVariable-Italic.ttf",
+                "fonts/Inter.ttc",
+                "fonts/JetBrainsMono-VariableFont_wght.ttf",
+                "fonts/JetBrainsMono-Italic-VariableFont_wght.ttf"
+            };
+
+            if (!File.Exists(marker))
+            {
+                Directory.CreateDirectory(appDir);
+                for (int i = 0; i < resources.Length; i++)
+                {
+                    string resourceName = resources[i];
+                    string destination = Path.Combine(appDir, relativePaths[i].Replace('/', Path.DirectorySeparatorChar));
+                    string destinationDirectory = Path.GetDirectoryName(destination);
+                    if (!String.IsNullOrEmpty(destinationDirectory)) Directory.CreateDirectory(destinationDirectory);
+
+                    using (Stream source = assembly.GetManifestResourceStream(resourceName))
+                    {
+                        if (source == null)
+                        {
+                            throw new FileNotFoundException("Embedded app resource is missing: " + resourceName);
+                        }
+                        using (FileStream target = File.Create(destination))
+                        {
+                            source.CopyTo(target);
+                        }
+                    }
+                }
+                File.WriteAllText(marker, versionText);
+            }
+
+            return appDir;
+        }
+
         static string FindChromiumBrowser()
         {
             string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -184,7 +245,7 @@ namespace Quing.Learn
             }
 
             // Check Windows Registry App Paths
-            string[] regKeys = new string[] { "vivaldi.exe", "chrome.exe", "brave.exe", "msedge.exe" };
+            string[] regKeys = new string[] { "chrome.exe", "vivaldi.exe", "brave.exe", "msedge.exe" };
             foreach (string name in regKeys)
             {
                 string path = GetRegistryAppPath(name);

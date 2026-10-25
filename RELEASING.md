@@ -39,12 +39,14 @@ new patch version so users can tell which files they downloaded.
 
 Each release contains:
 
-- `quing-cpp-core-VERSION-windows-x64.zip`: the app files and a freshly built
-  Windows launcher. The launcher uses Node.js and an installed browser; it is
-  not a self-contained installer.
-- `quing-cpp-core-VERSION-portable.zip`: the same app and server files without
-  the Windows launcher. Use `start_server.sh` on macOS/Linux or the supplied
-  batch script on Windows.
+- `quing-cpp-core-VERSION-windows-x64.zip`: a freshly built, self-contained
+  Windows launcher plus documentation. The `.exe` embeds the web app, companion
+  server, fonts, and Node.js runtime. It can be copied out of the ZIP and run by
+  itself from any folder. It still needs an installed browser; native C++
+  execution also needs a C++ compiler.
+- `quing-cpp-core-VERSION-portable.zip`: the app and server files for running
+  directly with an installed Node.js or Python runtime. Use `start_server.sh`
+  on macOS/Linux or the supplied batch script on Windows.
 - A `.sha256` file beside each ZIP, containing its SHA-256 checksum.
 
 GitHub also creates source-code ZIP and tar archives for the tag. Those are

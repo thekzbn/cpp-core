@@ -15,6 +15,8 @@ User-facing changes for each release are recorded here. Versions follow
   and SHA-256 checksums.
 - Embed the value from `VERSION` in the Windows launcher's file properties for
   both local builds and GitHub release builds.
+- Bundle the app, companion server, fonts, and Node.js runtime inside the
+  Windows launcher so it can run without adjacent project files.
 
 ### Changed
 

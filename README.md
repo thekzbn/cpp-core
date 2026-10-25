@@ -43,7 +43,7 @@ Additional features include:
 - Fill-in-the-blank code drills based on real C++ templates, with immediate validation.
 - Multiple-choice quizzes with explanations at the end of each lesson.
 - A local workspace folder configured through the **Workspace** button in the navigation bar, with an **Open in VS Code** option for lesson files.
-- Windows launcher (`Quing C++ Core.exe`) included in the GitHub release package; the release launcher is currently unsigned.
+- Self-contained Windows launcher that bundles the app, companion server, and Node.js runtime; it can run from any folder without adjacent project files. The release launcher is currently unsigned.
 - In-app 1-click toolchain setup for portable GCC (`w64devkit` ~35MB), LLVM Clang, and VS Code.
 - Direct `.cpp` export for any lesson.
 - Light and dark themes with persistent preferences and mobile-responsive settings drawer.
@@ -142,8 +142,10 @@ You can open **`index.html`** directly in any web browser (Chrome, Firefox, Safa
 
 ### 2. Windows (Desktop App & 1-Click Pipeline Setup)
 
-1. Double-click **`Quing C++ Core.exe`** (or run `start_server.bat` if you prefer your default browser).
-   - Silently boots the companion server and opens the tutorial in a distraction-free native desktop window.
+1. Double-click **`Quing C++ Core.exe`** from any folder.
+   - The executable contains the app files, companion server, and Node.js runtime. It prepares these files in your local app data folder, then opens the tutorial in a browser app window. You do not need `dev_server.js` or Node.js beside the executable.
+   - A C++ compiler is still needed for native compilation. Without one, the browser simulator remains available.
+   - If you prefer to start the server manually, run `start_server.bat` from the project folder; that option uses your installed Node.js.
 2. In the navigation bar, click **Workspace**:
    - The assistant auto-detects what is already installed on your PC.
    - If a tool is already installed (like VS Code or existing GCC/Clang), it shows **Installed ✓** and will never attempt a redundant install.
@@ -233,11 +235,13 @@ For code that needs a real compiler, use native execution instead.
 
 Download versioned portable packages and read the release notes on the
 [GitHub Releases page](https://github.com/thekzbn/cpp-core/releases). The
-Windows package includes the launcher; the portable package includes the app
-and server files for running it with Node.js or Python. The Windows launcher
-requires Node.js and an installed browser. The launcher is currently unsigned,
-so Windows may show an unknown-publisher warning. See [RELEASING.md](RELEASING.md)
-for how versions and packages are produced.
+Windows package contains a self-contained launcher and documentation. You can
+copy the `.exe` out of the ZIP and run it by itself; it includes the app files,
+companion server, and Node.js runtime. An installed browser is still required,
+and native C++ execution requires a C++ compiler. The portable package contains
+the app and server files for running directly with Node.js or Python. The
+Windows launcher is currently unsigned, so Windows may show an unknown-publisher
+warning. See [RELEASING.md](RELEASING.md) for how versions and packages are produced.
 
 ## Fonts
 
