@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C++ Core — learn.quing</title>
+  <!-- Quing Slate Typography: Inter Variable via rsms + JetBrains Mono -->
+  <link rel="preconnect" href="https://rsms.me/">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <button id="sidebarToggle" class="icon-button" aria-label="Toggle Navigation Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <a href="#" class="brand-link" title="Quing learn">
+        <img src="https://cdn.thekzbn.name.ng/assets/img/Quing%20Logo.svg" alt="Quing Logo" class="brand-logo" onerror="this.style.display='none'">
+        <span class="brand-company">Quing</span>
+        <span class="brand-product">learn</span>
+      </a>
+      <span class="brand-divider">/</span>
+      <span id="headerCurrentLesson" class="header-lesson-label">1. Setup & How C++ Works</span>
+    </div>
+
+    <div class="header-center">
+      <div class="search-wrapper">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="lessonSearch" placeholder="Search lessons, explanations, or concepts..." aria-label="Search lessons">
+        <button id="clearSearchBtn" class="search-clear-btn hidden" aria-label="Clear search" title="Clear search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <button id="toggleCodeSearchBtn" class="search-code-toggle-btn" title="Include code blocks in search (Currently OFF)" aria-label="Toggle include code in search" aria-pressed="false">
+          <code>&lt;/&gt;</code>
+        </button>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="color-picker-strip" id="colorPickerStrip" title="Select Accent Theme Color" role="radiogroup" aria-label="Accent theme color">
+        <!-- Rendered swatches with Quing Slate neutral and accents -->
+        <button class="color-swatch-btn" data-color="slate" title="Quing Slate" aria-label="Quing Slate" style="--swatch-color: var(--end);"></button>
+        <button class="color-swatch-btn active" data-color="dodgerblue" title="Dodger Blue" aria-label="Dodger Blue" style="--swatch-color: #1e90ff;"></button>
+        <button class="color-swatch-btn" data-color="tomato" title="Tomato" aria-label="Tomato" style="--swatch-color: #ff6347;"></button>
+        <button class="color-swatch-btn" data-color="mediumseagreen" title="Medium Sea Green" aria-label="Medium Sea Green" style="--swatch-color: #3cb371;"></button>
+        <button class="color-swatch-btn" data-color="emerald" title="Emerald" aria-label="Emerald" style="--swatch-color: #10b981;"></button>
+        <button class="color-swatch-btn" data-color="violet" title="Violet" aria-label="Violet" style="--swatch-color: #8b5cf6;"></button>
+        <button class="color-swatch-btn" data-color="amber" title="Amber" aria-label="Amber" style="--swatch-color: #f59e0b;"></button>
+        <button class="color-swatch-btn" data-color="cyan" title="Cyan" aria-label="Cyan" style="--swatch-color: #06b6d4;"></button>
+      </div>
+
+      <button id="readingFontToggleBtn" class="action-btn text-btn" title="Toggle article reading typography: Sans (Inter) / Serif (Merriweather)">
+        <span id="readingFontLabel">Serif</span>
+      </button>
+
+      <button id="workspaceSettingsBtn" class="action-btn text-btn" title="Configure local C++ root folder & VS Code settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-7l-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+        <span>Workspace</span>
+      </button>
+
+      <button id="themeToggleBtn" class="icon-button" aria-label="Toggle Dark and Light Mode" title="Toggle Light/Dark Theme">
+        <!-- Sun icon (shown in dark mode) -->
+        <svg class="theme-icon sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <!-- Moon icon (shown in light mode) -->
+        <svg class="theme-icon moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Settings Dialog / Modal -->
+  <dialog id="workspaceDialog" class="settings-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2>C++ Workspace Configuration</h2>
+        <button id="closeDialogBtn" class="icon-button" aria-label="Close dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      
+      <p class="dialog-desc">Set your local folder where C++ projects and lesson code files will be stored. When you click "Open in VS Code", files are saved directly into this folder without touching your Downloads folder.</p>
+
+      <div class="form-group">
+        <label for="workspaceRootInput">Local Projects Folder Path</label>
+        <div class="input-with-button">
+          <input type="text" id="workspaceRootInput" placeholder="e.g. C:\Users\Username\cpp_projects" autocomplete="off">
+          <button id="saveWorkspaceBtn" class="btn primary-btn">Save Path</button>
+        </div>
+        <p class="field-hint">Configured path: <span id="currentRootDisplay">C:\cpp_projects</span></p>
+
+        <div style="margin-top: 0.85rem;">
+          <button id="pickFolderBtn" class="action-btn" type="button" title="Link directly to a local folder with the browser File System API">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span id="pickFolderBtnText">Browse & Link Folder Directly (Native File System)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 1rem;">
+        <label class="checkbox-row" for="settingIncludeCodeSearch">
+          <input type="checkbox" id="settingIncludeCodeSearch">
+          <span class="checkbox-label-text">Include code blocks in lesson search</span>
+        </label>
+        <p class="field-hint">When unchecked (default), search indexes lesson text, conceptual explanations, and C-bridge notes while ignoring code snippets.</p>
+      </div>
+
+      <div class="server-status-box">
+        <div class="status-indicator-dot" id="serverStatusDot"></div>
+        <span id="serverStatusText">Checking companion server (http://localhost:8000)...</span>
+      </div>
+
+      <div class="dialog-note">
+        <h3>Two Seamless Ways to Auto-Save Directly:</h3>
+        <p>1. <strong>Native Folder Linking (No server required):</strong> Click "Browse & Link Folder Directly" above. Your browser gains direct write permission to your projects folder. Clicking "Open in VS Code" creates the <code>.cpp</code> file right there and triggers VS Code.</p>
+        <p>2. <strong>Companion Server:</strong> Run <code>node dev_server.js</code> in your terminal. It automatically saves files to your configured path and invokes <code>code</code> via command-line.</p>
+      </div>
+
+      <div class="toolchain-guide">
+        <h3>Prerequisites & Toolchain Setup</h3>
+        <p class="toolchain-intro">To compile and execute real C++ code natively on your machine, you need a C++ compiler (GCC or Clang) and optionally VS Code. Run these one-line commands in your terminal:</p>
+
+        <div class="toolchain-platform">
+          <h4>Windows (PowerShell)</h4>
+          <div class="command-block">
+            <span class="command-label">1. MinGW-w64 (GCC Compiler)</span>
+            <div class="command-row">
+              <code>winget install -e --id MSYS2.MSYS2</code>
+              <button type="button" class="copy-cmd-btn" data-copy="winget install -e --id MSYS2.MSYS2" title="Copy command">Copy</button>
+            </div>
+            <p class="cmd-subtext">Alternative (LLVM/Clang): <code>winget install -e --id LLVM.LLVM</code></p>
+          </div>
+
+          <div class="command-block">
+            <span class="command-label">2. Visual Studio Code</span>
+            <div class="command-row">
+              <code>winget install -e --id Microsoft.VisualStudioCode</code>
+              <button type="button" class="copy-cmd-btn" data-copy="winget install -e --id Microsoft.VisualStudioCode" title="Copy command">Copy</button>
+            </div>
+          </div>
+
+          <div class="command-block">
+            <span class="command-label">3. Node.js (Companion Server Runtime)</span>
+            <div class="command-row">
+              <code>winget install -e --id OpenJS.NodeJS.LTS</code>
+              <button type="button" class="copy-cmd-btn" data-copy="winget install -e --id OpenJS.NodeJS.LTS" title="Copy command">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolchain-platform">
+          <h4>macOS (Terminal)</h4>
+          <div class="command-block">
+            <span class="command-label">Apple Clang Compiler & VS Code</span>
+            <div class="command-row">
+              <code>xcode-select --install &amp;&amp; brew install --cask visual-studio-code</code>
+              <button type="button" class="copy-cmd-btn" data-copy="xcode-select --install &amp;&amp; brew install --cask visual-studio-code" title="Copy command">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolchain-platform">
+          <h4>Linux (Ubuntu / Debian)</h4>
+          <div class="command-block">
+            <span class="command-label">Build Tools & VS Code</span>
+            <div class="command-row">
+              <code>sudo apt update &amp;&amp; sudo apt install -y build-essential gdb &amp;&amp; sudo snap install --classic code</code>
+              <button type="button" class="copy-cmd-btn" data-copy="sudo apt update &amp;&amp; sudo apt install -y build-essential gdb &amp;&amp; sudo snap install --classic code" title="Copy command">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Main Container -->
+  <div class="layout-container">
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-progress">
+        <div class="progress-info">
+          <span>Overall Progress</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <nav id="lessonNav" class="nav-tree" aria-label="Course Curriculum Navigation">
+        <!-- Injected via JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Content Workspace -->
+    <main class="main-content" id="mainContent">
+      <article class="lesson-article">
+        <!-- Top Action Strip -->
+        <div class="lesson-actions-strip">
+          <span id="lessonCategory" class="lesson-category-text">Foundations</span>
+          <div class="action-buttons-group">
+            <button id="openVsCodeBtn" class="action-btn" title="Open this lesson directly in VS Code">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              <span>Open in VS Code</span>
+            </button>
+            <button id="downloadCppBtn" class="action-btn text-btn" title="Download .cpp file for this lesson">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export .cpp</span>
+            </button>
+            <button id="markCompleteBtn" class="action-btn" title="Toggle completed state">
+              <span id="markCompleteText">Mark Complete</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Lesson Header -->
+        <h1 id="lessonTitle" class="lesson-heading">1. Setup & How C++ Works</h1>
+        <p id="lessonSummary" class="lesson-lead"></p>
+
+        <!-- Status Toast Banner for VS Code opening -->
+        <div id="vscodeStatusToast" class="status-toast hidden"></div>
+
+        <!-- C-Bridge Callout -->
+        <div class="c-bridge-callout">
+          <div class="callout-heading">From C to C++: The Transition Insight</div>
+          <div id="cBridgeText" class="callout-body"></div>
+        </div>
+
+        <!-- Lesson Body Text -->
+        <div id="lessonBody" class="lesson-body-prose"></div>
+
+        <!-- Section Divider -->
+        <hr class="content-divider">
+
+        <!-- Interactive C++ Simulator Section -->
+        <section class="simulator-section">
+          <h2>Interactive C++ Simulator</h2>
+          <p class="section-description">Edit the source code below, supply optional standard input, and run it in the simulated terminal execution environment.</p>
+
+          <div class="code-workspace">
+            <div class="editor-header">
+              <div class="editor-tab">
+                <span id="editorFilename">main.cpp</span>
+              </div>
+              <div class="editor-controls">
+                <button id="resetCodeBtn" class="secondary-btn" title="Reset to original lesson starter code">Reset</button>
+                <button id="copyCodeBtn" class="secondary-btn" title="Copy code to clipboard">Copy</button>
+                <button id="runCodeBtn" class="primary-btn run-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>Run (Ctrl+Enter)</span>
+                </button>
+              </div>
+            </div>
+
+            <textarea id="codeEditor" spellcheck="false" aria-label="C++ Code Editor"></textarea>
+
+            <div class="stdin-container">
+              <label for="stdinInput">Standard Input (cin stream):</label>
+              <input type="text" id="stdinInput" placeholder="Enter values separated by newline or space for cin queries...">
+            </div>
+
+            <div class="terminal-container">
+              <div class="terminal-header">
+                <div class="terminal-header-title">
+                  <span>Terminal Output</span>
+                  <span id="compilerBadge" class="compiler-badge mode-sim" title="Active Execution Engine">Simulator</span>
+                </div>
+                <span id="terminalStatus" class="terminal-status-idle">Idle</span>
+              </div>
+              <pre id="terminalOutput" class="terminal-screen"></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section Divider -->
+        <hr class="content-divider">
+
+        <!-- Interactive Fill in the Blanks Drill -->
+        <section class="drill-section">
+          <h2>Code Drill: Fill in the Blanks</h2>
+          <p id="drillInstructions" class="section-description"></p>
+
+          <div class="fill-blank-wrapper">
+            <div id="fillBlankContainer" class="fill-blank-code"></div>
+            <div class="drill-actions">
+              <button id="checkBlanksBtn" class="btn primary-btn">Check My Answers</button>
+              <button id="revealBlanksBtn" class="btn secondary-btn">Reveal Answers</button>
+            </div>
+            <div id="drillFeedback" class="drill-feedback-message"></div>
+          </div>
+        </section>
+
+        <!-- Section Divider -->
+        <hr class="content-divider">
+
+        <!-- Concept Check / Quiz Section -->
+        <section class="quiz-section">
+          <h2>Concept Check</h2>
+          <p class="section-description">Verify your understanding of this topic before proceeding.</p>
+
+          <div class="quiz-container">
+            <p id="quizQuestion" class="quiz-question-text"></p>
+            <div id="quizOptions" class="quiz-options-list"></div>
+            <div id="quizFeedback" class="quiz-feedback hidden"></div>
+          </div>
+        </section>
+
+        <!-- Bottom Lesson Paging Footer -->
+        <footer class="lesson-footer">
+          <button id="prevLessonBtn" class="nav-page-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+            <span class="btn-text-col">
+              <span class="btn-sub">Previous</span>
+              <span id="prevLessonTitle" class="btn-main-title">-</span>
+            </span>
+          </button>
+
+          <button id="nextLessonBtn" class="nav-page-btn">
+            <span class="btn-text-col align-right">
+              <span class="btn-sub">Next</span>
+              <span id="nextLessonTitle" class="btn-main-title">-</span>
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </footer>
+      </article>
+    </main>
+  </div>
+
+  <script src="lessons.js"></script>
+  <script src="simulator.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
