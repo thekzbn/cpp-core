@@ -19,3 +19,8 @@ User-facing changes for each release are recorded here. Versions follow
 - Expand the README curriculum and update the Windows launcher description to
   match the unsigned release package.
 - Improve capstone guidance with staged implementation steps and input validation.
+
+### Fixed
+
+- Correct lesson content string boundaries so JavaScript loads the curriculum
+  and renders the lesson navigation.
