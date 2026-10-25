@@ -29,6 +29,9 @@ that tag and attaches them to a GitHub Release.
 6. On GitHub, open **Actions** and confirm the “Build and publish release” run
    succeeds. Then review the generated release page and its attached ZIP files.
 
+Local and release Windows builds read `VERSION` and embed it in the launcher's
+file properties, so the version shown in Windows matches the release metadata.
+
 Do not move a published version tag. If a release needs correction, publish a
 new patch version so users can tell which files they downloaded.
 

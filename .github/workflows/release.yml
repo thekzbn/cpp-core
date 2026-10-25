@@ -34,7 +34,9 @@ jobs:
           if (-not (Test-Path $compiler)) {
             throw "The .NET Framework C# compiler was not found at $compiler."
           }
-          & $compiler /nologo /target:winexe "/out:$env:RUNNER_TEMP\Quing C++ Core.exe" launcher.cs
+          $assemblyInfo = Join-Path $env:RUNNER_TEMP 'QuingCppCoreAssemblyInfo.cs'
+          & .\build_version_info.ps1 -OutputPath $assemblyInfo
+          & $compiler /nologo /target:winexe "/out:$env:RUNNER_TEMP\Quing C++ Core.exe" launcher.cs $assemblyInfo
           if ($LASTEXITCODE -ne 0) {
             throw "Launcher compilation failed with exit code $LASTEXITCODE."
           }

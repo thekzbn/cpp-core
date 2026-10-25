@@ -13,6 +13,8 @@ User-facing changes for each release are recorded here. Versions follow
   to `cin` and `getline` prompts while a program runs.
 - Establish a tagged GitHub release process with downloadable portable packages
   and SHA-256 checksums.
+- Embed the value from `VERSION` in the Windows launcher's file properties for
+  both local builds and GitHub release builds.
 
 ### Changed
 
