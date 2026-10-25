@@ -17,36 +17,96 @@ const MIME_TYPES = {
   ".json": "application/json; charset=utf-8",
   ".cpp": "text/x-c++src; charset=utf-8",
   ".txt": "text/plain; charset=utf-8",
-  ".svg": "image/svg+xml"
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+  ".woff2": "font/woff2"
 };
 
-// Detect local C++ compiler (g++, clang++, cl, or MSYS2 default installations)
+// Check if winget is available
+function checkWinget(callback) {
+  exec("winget --version", (err, stdout) => {
+    callback(!err && stdout && stdout.trim().length > 0);
+  });
+}
+
+// Detect VS Code installation
+function detectVsCode(callback) {
+  exec("code --version", (err, stdout) => {
+    if (!err && stdout) {
+      const line = stdout.trim().split("\n")[0];
+      return callback({ installed: true, cmd: "code", version: line });
+    }
+
+    const candidatePaths = [
+      path.join(process.env.LOCALAPPDATA || "", "Programs", "Microsoft VS Code", "bin", "code.cmd"),
+      path.join(process.env.ProgramFiles || "C:\\Program Files", "Microsoft VS Code", "bin", "code.cmd"),
+      path.join(process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "Microsoft VS Code", "bin", "code.cmd"),
+      path.join(process.env.LOCALAPPDATA || "", "Programs", "Microsoft VS Code", "Code.exe")
+    ];
+
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        return callback({ installed: true, cmd: `"${p}"`, path: p, version: "Installed (Local)" });
+      }
+    }
+    callback({ installed: false, cmd: null, version: null });
+  });
+}
+
+// Detect local C++ compiler (portable toolchain, g++, clang++, or system MinGW/MSYS2/LLVM)
 function detectCompiler(callback) {
+  // 1. Check local portable toolchain in project folder first (zero install)
+  const localCandidates = [
+    path.join(WORKSPACE_DIR, "toolchain", "w64devkit", "bin", "g++.exe"),
+    path.join(WORKSPACE_DIR, "toolchain", "bin", "g++.exe"),
+    path.join(WORKSPACE_DIR, "w64devkit", "bin", "g++.exe")
+  ];
+
+  for (const p of localCandidates) {
+    if (fs.existsSync(p)) {
+      try {
+        const out = require("child_process").execSync(`"${p}" --version`, { encoding: "utf-8", timeout: 3000 });
+        const line = out.trim().split("\n")[0];
+        return callback({ name: `"${p}"`, display: "Portable GCC", version: line, path: p, isPortable: true });
+      } catch (e) {}
+    }
+  }
+
+  // 2. Check system PATH for g++
   exec("g++ --version", (err1, stdout1) => {
     if (!err1 && stdout1) {
       const line = stdout1.trim().split("\n")[0];
-      return callback({ name: "g++", version: line });
+      return callback({ name: "g++", display: "System g++", version: line, isPortable: false });
     }
+
+    // 3. Check system PATH for clang++
     exec("clang++ --version", (err2, stdout2) => {
       if (!err2 && stdout2) {
         const line = stdout2.trim().split("\n")[0];
-        return callback({ name: "clang++", version: line });
+        return callback({ name: "clang++", display: "System clang++", version: line, isPortable: false });
       }
-      // Check standard Windows MinGW / MSYS2 paths if not on user PATH
+
+      // 4. Check standard Windows LLVM / MinGW / MSYS2 installation locations
       const candidatePaths = [
+        "C:\\Program Files\\LLVM\\bin\\clang++.exe",
+        path.join(process.env.LOCALAPPDATA || "", "Programs", "LLVM", "bin", "clang++.exe"),
         "C:\\msys64\\ucrt64\\bin\\g++.exe",
         "C:\\msys64\\mingw64\\bin\\g++.exe",
         "C:\\MinGW\\bin\\g++.exe"
       ];
+
       for (const p of candidatePaths) {
         if (fs.existsSync(p)) {
           try {
             const out = require("child_process").execSync(`"${p}" --version`, { encoding: "utf-8", timeout: 3000 });
             const line = out.trim().split("\n")[0];
-            return callback({ name: `"${p}"`, version: line });
+            const display = p.toLowerCase().includes("clang") ? "LLVM Clang++" : "MinGW-w64 GCC";
+            return callback({ name: `"${p}"`, display: display, version: line, path: p, isPortable: false });
           } catch (e) {}
         }
       }
+
       callback(null);
     });
   });
@@ -64,15 +124,192 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API Endpoint: Server & Compiler Status
+  // API Endpoint: Simple Status Check (Legacy & fast)
   if (req.method === "GET" && req.url === "/api/status") {
     detectCompiler((compilerInfo) => {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({
         online: true,
         compiler: compilerInfo ? compilerInfo.name : null,
-        compilerVersion: compilerInfo ? compilerInfo.version : null
+        compilerDisplay: compilerInfo ? compilerInfo.display : null,
+        compilerVersion: compilerInfo ? compilerInfo.version : null,
+        isPortable: compilerInfo ? compilerInfo.isPortable : false
       }));
+    });
+    return;
+  }
+
+  // API Endpoint: Graceful Shutdown
+  if (req.method === "POST" && req.url === "/api/shutdown") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true, message: "Companion server shutting down." }));
+    setTimeout(() => {
+      process.exit(0);
+    }, 500);
+    return;
+  }
+
+  // API Endpoint: Full System Pipeline Status
+  if (req.method === "GET" && req.url === "/api/system-status") {
+    detectCompiler((compilerInfo) => {
+      detectVsCode((vscodeInfo) => {
+        checkWinget((wingetAvailable) => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            server: { online: true, port: PORT },
+            compiler: compilerInfo,
+            vscode: vscodeInfo,
+            winget: wingetAvailable
+          }));
+        });
+      });
+    });
+    return;
+  }
+
+  // API Endpoint: Run Setup Actions (Streaming output with duplicate install protection)
+  if (req.method === "POST" && req.url === "/api/setup/action") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", () => {
+      try {
+        const payload = JSON.parse(body || "{}");
+        const action = payload.action;
+
+        res.writeHead(200, {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Transfer-Encoding": "chunked",
+          "X-Content-Type-Options": "nosniff"
+        });
+
+        const sendLine = (line) => {
+          try { res.write(line + "\n"); } catch (e) {}
+        };
+
+        if (action === "install-vscode") {
+          detectVsCode((vscodeInfo) => {
+            if (vscodeInfo.installed) {
+              sendLine(`[Quing learn] Visual Studio Code is already installed on this system (${vscodeInfo.version || vscodeInfo.cmd}).`);
+              sendLine("[SUCCESS] No installation needed.");
+              res.end();
+              return;
+            }
+
+            sendLine("[Quing learn] Initiating VS Code installation via winget...");
+            sendLine("Command: winget install -e --id Microsoft.VisualStudioCode --accept-package-agreements --accept-source-agreements");
+            
+            const proc = spawn("winget", [
+              "install", "-e", "--id", "Microsoft.VisualStudioCode",
+              "--accept-package-agreements", "--accept-source-agreements"
+            ], { shell: true });
+
+            proc.stdout.on("data", d => sendLine(d.toString()));
+            proc.stderr.on("data", d => sendLine(d.toString()));
+            proc.on("close", code => {
+              sendLine(`\n[Quing learn] Process finished with exit code ${code}.`);
+              if (code === 0) {
+                sendLine("[SUCCESS] Visual Studio Code installed successfully!");
+              }
+              res.end();
+            });
+          });
+          return;
+        }
+
+        if (action === "install-llvm") {
+          detectCompiler((compilerInfo) => {
+            if (compilerInfo) {
+              sendLine(`[Quing learn] C++ compiler is already available: ${compilerInfo.display} (${compilerInfo.version}).`);
+              sendLine("[SUCCESS] No installation needed.");
+              res.end();
+              return;
+            }
+
+            sendLine("[Quing learn] Initiating LLVM Clang installation via winget...");
+            sendLine("Command: winget install -e --id LLVM.LLVM --accept-package-agreements --accept-source-agreements");
+
+            const proc = spawn("winget", [
+              "install", "-e", "--id", "LLVM.LLVM",
+              "--accept-package-agreements", "--accept-source-agreements"
+            ], { shell: true });
+
+            proc.stdout.on("data", d => sendLine(d.toString()));
+            proc.stderr.on("data", d => sendLine(d.toString()));
+            proc.on("close", code => {
+              sendLine(`\n[Quing learn] Process finished with exit code ${code}.`);
+              if (code === 0) {
+                sendLine("[SUCCESS] LLVM Clang++ installed successfully!");
+              }
+              res.end();
+            });
+          });
+          return;
+        }
+
+        if (action === "install-portable") {
+          const toolchainDir = path.join(WORKSPACE_DIR, "toolchain");
+          const existingGcc = path.join(toolchainDir, "w64devkit", "bin", "g++.exe");
+          if (fs.existsSync(existingGcc)) {
+            sendLine(`[Quing learn] Portable GCC is already present at ${existingGcc}.`);
+            sendLine("[SUCCESS] No download needed.");
+            res.end();
+            return;
+          }
+
+          sendLine("[Quing learn] Setting up Portable GCC Toolchain (w64devkit)...");
+          if (!fs.existsSync(toolchainDir)) {
+            fs.mkdirSync(toolchainDir, { recursive: true });
+          }
+          const zipPath = path.join(toolchainDir, "w64devkit.zip");
+          const downloadUrl = "https://github.com/skeeto/w64devkit/releases/download/v1.23.0/w64devkit-1.23.0.zip";
+
+          sendLine(`1. Downloading portable GCC archive (~76MB uncompressed / ~35MB download)...`);
+          sendLine(`Target: ${zipPath}`);
+
+          // Use curl.exe built into Windows
+          const curlProc = spawn("curl.exe", ["-L", "-#", "-o", zipPath, downloadUrl], { shell: true });
+          curlProc.stdout.on("data", d => sendLine(d.toString()));
+          curlProc.stderr.on("data", d => sendLine(d.toString()));
+
+          curlProc.on("close", curlCode => {
+            if (curlCode !== 0) {
+              sendLine(`\n[ERROR] Download failed with code ${curlCode}.`);
+              res.end();
+              return;
+            }
+
+            sendLine(`\n2. Extracting toolchain archive using native tar...`);
+            const tarProc = spawn("tar.exe", ["-xf", zipPath, "-C", toolchainDir], { shell: true });
+            tarProc.stdout.on("data", d => sendLine(d.toString()));
+            tarProc.stderr.on("data", d => sendLine(d.toString()));
+
+            tarProc.on("close", tarCode => {
+              // Delete zip to save disk space on potato PC
+              try { if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath); } catch (e) {}
+
+              if (tarCode === 0) {
+                sendLine("\n3. Verifying portable compiler binary...");
+                const gccBinary = path.join(toolchainDir, "w64devkit", "bin", "g++.exe");
+                if (fs.existsSync(gccBinary)) {
+                  sendLine(`[SUCCESS] Portable GCC is ready: ${gccBinary}`);
+                } else {
+                  sendLine(`[SUCCESS] Extraction completed to: ${toolchainDir}`);
+                }
+              } else {
+                sendLine(`\n[WARNING] Extraction completed with code ${tarCode}`);
+              }
+              res.end();
+            });
+          });
+          return;
+        }
+
+        sendLine(`[ERROR] Unknown action: ${action}`);
+        res.end();
+      } catch (err) {
+        res.writeHead(500, { "Content-Type": "text/plain" });
+        res.end(`Server Error: ${err.message}`);
+      }
     });
     return;
   }
@@ -99,7 +336,7 @@ const server = http.createServer((req, res) => {
             res.end(JSON.stringify({
               success: false,
               compilerFound: false,
-              error: "No C++ compiler (g++ or clang++) detected on system PATH.\nPlease install MinGW-w64 or Clang to compile and run natively on this machine."
+              error: "No C++ compiler detected.\nPlease use the Setup Assistant in the Workspace menu to download the portable compiler (~35MB) or install LLVM."
             }));
             return;
           }
@@ -139,47 +376,38 @@ const server = http.createServer((req, res) => {
 
             // Binary compiled successfully -> Execute with safety timeout
             const execStart = Date.now();
-            let stdoutBuf = "";
-            let stderrBuf = "";
+            const child = spawn(exePath, [], { windowsHide: true });
+            let stdoutData = "";
+            let stderrData = "";
             let timedOut = false;
 
-            const child = spawn(exePath, [], {
-              stdio: ["pipe", "pipe", "pipe"],
-              windowsHide: true
-            });
-
-            const timer = setTimeout(() => {
+            const watchdog = setTimeout(() => {
               timedOut = true;
               try { child.kill("SIGKILL"); } catch (e) {}
             }, 8000);
 
-            child.stdout.on("data", chunk => { stdoutBuf += chunk.toString("utf-8"); });
-            child.stderr.on("data", chunk => { stderrBuf += chunk.toString("utf-8"); });
-
-            if (stdinData) {
+            const formattedStdin = stdinData ? (stdinData.endsWith("\n") ? stdinData : stdinData + "\n") : "";
+            if (formattedStdin) {
               try {
-                child.stdin.write(stdinData);
-                if (!stdinData.endsWith("\n")) child.stdin.write("\n");
-                child.stdin.end();
+                child.stdin.write(formattedStdin);
               } catch (e) {}
-            } else {
-              try { child.stdin.end(); } catch (e) {}
             }
+            try { child.stdin.end(); } catch (e) {}
 
-            child.on("close", (code, signal) => {
-              clearTimeout(timer);
+            child.stdout.on("data", chunk => { stdoutData += chunk.toString(); });
+            child.stderr.on("data", chunk => { stderrData += chunk.toString(); });
+
+            child.on("close", (code) => {
+              clearTimeout(watchdog);
               cleanup();
-
               const duration = Date.now() - execStart;
-              let finalOutput = stdoutBuf;
-
-              if (stderrBuf) {
+              let finalOutput = stdoutData;
+              if (stderrData) {
                 if (finalOutput && !finalOutput.endsWith("\n")) finalOutput += "\n";
-                finalOutput += stderrBuf;
+                finalOutput += stderrData;
               }
-
               if (timedOut) {
-                finalOutput += "\n[Execution terminated: Process timed out after 8 seconds (check for infinite loops)].";
+                finalOutput += "\n[Process terminated: Execution exceeded safety limit (8s)]";
               }
 
               res.writeHead(200, { "Content-Type": "application/json" });
@@ -196,7 +424,7 @@ const server = http.createServer((req, res) => {
             });
 
             child.on("error", (err) => {
-              clearTimeout(timer);
+              clearTimeout(watchdog);
               cleanup();
               res.writeHead(200, { "Content-Type": "application/json" });
               res.end(JSON.stringify({
@@ -241,16 +469,21 @@ const server = http.createServer((req, res) => {
         // Write source file to disk
         fs.writeFileSync(targetPath, codeContent, "utf-8");
 
-        // Launch VS Code
-        exec(`code "${targetPath}"`, (err) => {
-          const vscodeLaunched = !err;
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({
-            success: true,
-            targetPath: targetPath,
-            vscodeLaunched: vscodeLaunched,
-            message: `Created ${targetPath} and opened in VS Code.`
-          }));
+        // Launch VS Code using detected command or system fallback
+        detectVsCode((vscodeInfo) => {
+          const cmd = vscodeInfo.cmd || "code";
+          exec(`${cmd} "${targetPath}"`, (err) => {
+            const vscodeLaunched = !err;
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({
+              success: true,
+              targetPath: targetPath,
+              vscodeLaunched: vscodeLaunched,
+              message: vscodeLaunched
+                ? `Saved to ${targetPath} and opened in VS Code.`
+                : `Saved to ${targetPath}, but VS Code could not be launched automatically.`
+            }));
+          });
         });
       } catch (err) {
         res.writeHead(500, { "Content-Type": "application/json" });
@@ -290,7 +523,7 @@ server.listen(PORT, () => {
   console.log("===========================================================");
   console.log(` Quing learn (learn.quing) — C++ Core Companion Server`);
   console.log(` http://localhost:${PORT}`);
-  console.log(` Native C++ compilation (g++/clang++) & VS Code sync active.`);
+  console.log(` Native C++ compilation & VS Code sync active.`);
   console.log(` Press Ctrl+C to stop.`);
   console.log("===========================================================");
 });

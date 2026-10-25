@@ -18,10 +18,23 @@ PORT = 8000
 WORKSPACE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def detect_compiler():
-    candidate_cmds = ["g++", "clang++"]
+    candidate_cmds = []
+    # 1. Local portable toolchain (zero install)
+    local_candidates = [
+        os.path.join(WORKSPACE_DIR, "toolchain", "w64devkit", "bin", "g++.exe"),
+        os.path.join(WORKSPACE_DIR, "toolchain", "bin", "g++.exe"),
+        os.path.join(WORKSPACE_DIR, "w64devkit", "bin", "g++.exe")
+    ]
+    for p in local_candidates:
+        if os.path.exists(p):
+            candidate_cmds.append(p)
+
+    candidate_cmds.extend(["g++", "clang++"])
     # Check standard Windows paths if not on PATH
     if os.name == "nt":
         candidate_cmds.extend([
+            r"C:\Program Files\LLVM\bin\clang++.exe",
+            os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "LLVM", "bin", "clang++.exe"),
             r"C:\msys64\ucrt64\bin\g++.exe",
             r"C:\msys64\mingw64\bin\g++.exe",
             r"C:\MinGW\bin\g++.exe"

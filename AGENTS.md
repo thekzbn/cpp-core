@@ -35,12 +35,31 @@ This project adheres to the official **Quing** brand style guide (`slate` design
 - Beginner-first explanations with clear transitional notes for learners coming from a C background.
 
 ## Execution Architecture & Tradeoffs
-- **Primary Execution Engine (Option 2 - Local Native Companion Server):**
+- **Primary Execution Engine (Local Native Companion Server & Desktop App):**
   - Prioritizes user privacy, zero telemetry, and true parity with production compilers (`g++` / `clang++`).
-  - Supported via zero-dependency companion servers (`dev_server.js` and `dev_server.py`).
+  - Native Windows desktop launcher (`Quing C++ Core.exe`) compiled with built-in .NET `csc.exe` and digitally signed with Authenticode.
+  - Zero-dependency companion servers (`dev_server.js` and `dev_server.py`) with streaming installation endpoint (`/api/setup/action`).
   - Safe execution: compiles with `-std=c++17 -Wall -O2`, isolates temporary artifacts in OS temp directories with automatic cleanup, and enforces an 8-second execution watchdog timer to prevent infinite loops.
 - **Offline / Standalone Fallback:**
   - If the companion server is offline or no native compiler is on PATH, the client gracefully falls back to the in-browser simulator.
   - The UI explicitly communicates execution mode via the `#compilerBadge` in the terminal header.
+  - Both native execution and simulator support full `std::cin` / `std::getline` streams with buffer clearing (`cin.ignore()`).
 - **Toolchain Onboarding:**
-  - First-time setup friction is minimized through copy-pasteable package manager commands (`winget`, `brew`, `apt`) surfaced directly inside the Workspace modal and README.
+  - First-time setup friction is minimized through an interactive 1-click in-app setup assistant (supporting zero-install portable GCC `w64devkit`, LLVM, and VS Code), backed by package manager commands (`winget`, `brew`, `apt`) surfaced directly inside the Workspace modal and README.
+  - Code blocks and editor include line numbers with synchronized gutters.
+  - Mobile header automatically collapses navigation preferences into a dedicated Slate settings drawer.
+
+## Commit Message Convention
+All commits must follow this structure:
+```text
+<tag>(<scope>): <commit title>
+
+Message:
+- <what the changes were for: motivation / purpose>
+- <what the changes were for: benefits / context>
+
+Changes:
+- <what changes there were: specific file or logic modifications>
+- <what changes there were: additions or removals>
+```
+Tags: `feat`, `fix`, `docs`, `style`, `refactor`, `chore`.

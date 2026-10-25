@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>C++ Core — learn.quing</title>
+  <title>C++ Core || learn.quing</title>
   <!-- Quing Slate Typography: Inter Variable via rsms + JetBrains Mono -->
   <link rel="preconnect" href="https://rsms.me/">
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
@@ -19,10 +19,11 @@
       <button id="sidebarToggle" class="icon-button" aria-label="Toggle Navigation Menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
       </button>
-      <a href="#" class="brand-link" title="Quing learn">
+      <a href="#" class="brand-link" title="C++ Core || learn.quing">
         <img src="https://cdn.thekzbn.name.ng/assets/img/Quing%20Logo.svg" alt="Quing Logo" class="brand-logo" onerror="this.style.display='none'">
-        <span class="brand-company">Quing</span>
-        <span class="brand-product">learn</span>
+        <span class="brand-company">C++ Core</span>
+        <span class="brand-pipe">||</span>
+        <span class="brand-product">learn.quing</span>
       </a>
       <span class="brand-divider">/</span>
       <span id="headerCurrentLesson" class="header-lesson-label">1. Setup & How C++ Works</span>
@@ -69,6 +70,11 @@
         <!-- Moon icon (shown in light mode) -->
         <svg class="theme-icon moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
+
+      <!-- Mobile Settings Menu Toggle (collapsed on small screens) -->
+      <button id="mobileSettingsBtn" class="icon-button mobile-only" aria-label="Open Preferences and Settings" title="Preferences &amp; Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
     </div>
   </header>
 
@@ -108,9 +114,56 @@
         <p class="field-hint">When unchecked (default), search indexes lesson text, conceptual explanations, and C-bridge notes while ignoring code snippets.</p>
       </div>
 
-      <div class="server-status-box">
-        <div class="status-indicator-dot" id="serverStatusDot"></div>
-        <span id="serverStatusText">Checking companion server (http://localhost:8000)...</span>
+      <div class="setup-assistant-section">
+        <h3>Local Pipeline & Toolchain Assistant</h3>
+        <p class="toolchain-intro">Configure your compiler, editor, and workspace with a single click. When using the companion server, installations run directly on your system without manual PATH configuration.</p>
+
+        <div class="pipeline-list">
+          <div class="pipeline-item" id="pipelineServerItem">
+            <div class="pipeline-item-main">
+              <span class="status-indicator-dot" id="setupServerDot"></span>
+              <div class="pipeline-text">
+                <strong class="pipeline-title">Companion Server</strong>
+                <span class="pipeline-status" id="setupServerStatus">Checking connection...</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pipeline-item" id="pipelineCompilerItem">
+            <div class="pipeline-item-main">
+              <span class="status-indicator-dot" id="setupCompilerDot"></span>
+              <div class="pipeline-text">
+                <strong class="pipeline-title">C++ Native Compiler</strong>
+                <span class="pipeline-status" id="setupCompilerStatus">Checking compiler status...</span>
+              </div>
+            </div>
+            <div class="pipeline-actions" id="compilerActions">
+              <button type="button" class="btn primary-btn" id="btnInstallPortableGcc" title="Download portable GCC 14 (~35MB download)">Install Portable GCC (~35MB)</button>
+              <button type="button" class="action-btn" id="btnInstallLlvm" title="Install system-wide LLVM Clang via winget">Install LLVM (winget)</button>
+            </div>
+          </div>
+
+          <div class="pipeline-item" id="pipelineVscodeItem">
+            <div class="pipeline-item-main">
+              <span class="status-indicator-dot" id="setupVscodeDot"></span>
+              <div class="pipeline-text">
+                <strong class="pipeline-title">Visual Studio Code</strong>
+                <span class="pipeline-status" id="setupVscodeStatus">Checking VS Code installation...</span>
+              </div>
+            </div>
+            <div class="pipeline-actions" id="vscodeActions">
+              <button type="button" class="btn primary-btn" id="btnInstallVscode" title="Install VS Code via winget">Install VS Code (winget)</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="setupTerminalBox" class="setup-terminal-box hidden">
+          <div class="setup-terminal-header">
+            <span id="setupTerminalTitle">Installation Output</span>
+            <span id="setupTerminalStatus" class="terminal-status-running">Running...</span>
+          </div>
+          <pre id="setupTerminalLog" class="setup-terminal-log"></pre>
+        </div>
       </div>
 
       <div class="dialog-note">
@@ -172,6 +225,107 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Mobile Settings Dialog -->
+  <dialog id="mobileSettingsDialog" class="settings-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2>Preferences &amp; Settings</h2>
+        <button id="closeMobileSettingsBtn" class="icon-button" aria-label="Close settings dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="mobile-settings-section">
+        <label class="mobile-section-label">Theme Mode</label>
+        <button id="mobileThemeToggleBtn" class="action-btn text-btn full-width-btn" type="button">
+          <span id="mobileThemeLabel">Switch to Light Mode</span>
+        </button>
+      </div>
+
+      <div class="mobile-settings-section">
+        <label class="mobile-section-label">Accent Color</label>
+        <div class="color-picker-strip mobile-swatches" id="mobileColorPickerStrip" role="radiogroup" aria-label="Mobile accent theme color">
+          <button class="color-swatch-btn" data-color="slate" title="Quing Slate" aria-label="Quing Slate" style="--swatch-color: var(--end);"></button>
+          <button class="color-swatch-btn active" data-color="dodgerblue" title="Dodger Blue" aria-label="Dodger Blue" style="--swatch-color: #1e90ff;"></button>
+          <button class="color-swatch-btn" data-color="tomato" title="Tomato" aria-label="Tomato" style="--swatch-color: #ff6347;"></button>
+          <button class="color-swatch-btn" data-color="mediumseagreen" title="Medium Sea Green" aria-label="Medium Sea Green" style="--swatch-color: #3cb371;"></button>
+          <button class="color-swatch-btn" data-color="emerald" title="Emerald" aria-label="Emerald" style="--swatch-color: #10b981;"></button>
+          <button class="color-swatch-btn" data-color="violet" title="Violet" aria-label="Violet" style="--swatch-color: #8b5cf6;"></button>
+          <button class="color-swatch-btn" data-color="amber" title="Amber" aria-label="Amber" style="--swatch-color: #f59e0b;"></button>
+          <button class="color-swatch-btn" data-color="cyan" title="Cyan" aria-label="Cyan" style="--swatch-color: #06b6d4;"></button>
+        </div>
+      </div>
+
+      <div class="mobile-settings-section">
+        <label class="mobile-section-label">Reading Typography</label>
+        <button id="mobileReadingFontToggleBtn" class="action-btn text-btn full-width-btn" type="button">
+          <span id="mobileReadingFontLabel">Article Font: Sans (Inter)</span>
+        </button>
+      </div>
+
+      <div class="mobile-settings-section" style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+        <label class="mobile-section-label">Workspace &amp; Toolchain</label>
+        <button id="mobileWorkspaceBtn" class="btn primary-btn full-width-btn" type="button">
+          Open Workspace Configuration
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Application First-Run Setup Dialog (Desktop App Only, Shown Once) -->
+  <dialog id="firstRunAppDialog" class="settings-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2>C++ Core Setup</h2>
+      </div>
+
+      <p class="dialog-desc">Welcome to the desktop edition. Let's make sure your compiler and editor are configured so you can compile real C++ programs locally.</p>
+
+      <div class="pipeline-list">
+        <div class="pipeline-item">
+          <div class="pipeline-item-main">
+            <span class="status-indicator-dot" id="firstRunCompilerDot"></span>
+            <div class="pipeline-text">
+              <strong class="pipeline-title">C++ Native Compiler</strong>
+              <span class="pipeline-status" id="firstRunCompilerStatus">Checking system compiler...</span>
+            </div>
+          </div>
+          <div class="pipeline-actions" id="firstRunCompilerActions">
+            <button type="button" class="btn primary-btn" id="firstRunBtnInstallGcc">Install Portable GCC (~35MB)</button>
+            <button type="button" class="action-btn" id="firstRunBtnInstallLlvm">Install LLVM (winget)</button>
+          </div>
+        </div>
+
+        <div class="pipeline-item">
+          <div class="pipeline-item-main">
+            <span class="status-indicator-dot" id="firstRunVscodeDot"></span>
+            <div class="pipeline-text">
+              <strong class="pipeline-title">Visual Studio Code</strong>
+              <span class="pipeline-status" id="firstRunVscodeStatus">Checking VS Code...</span>
+            </div>
+          </div>
+          <div class="pipeline-actions" id="firstRunVscodeActions">
+            <button type="button" class="btn primary-btn" id="firstRunBtnInstallVscode">Install VS Code (winget)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="firstRunTerminalBox" class="setup-terminal-box hidden">
+        <div class="setup-terminal-header">
+          <span id="firstRunTerminalTitle">Installation Output</span>
+          <span id="firstRunTerminalStatus" class="terminal-status-running">Running...</span>
+        </div>
+        <pre id="firstRunTerminalLog" class="setup-terminal-log"></pre>
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+        <button id="firstRunCompleteBtn" class="btn primary-btn" type="button" style="padding: 0.55rem 1.25rem;">
+          Start Learning C++ Core
+        </button>
       </div>
     </div>
   </dialog>
@@ -255,11 +409,17 @@
               </div>
             </div>
 
-            <textarea id="codeEditor" spellcheck="false" aria-label="C++ Code Editor"></textarea>
+            <div class="editor-with-gutter">
+              <div class="editor-gutter" id="editorGutter" aria-hidden="true"></div>
+              <textarea id="codeEditor" spellcheck="false" aria-label="C++ Code Editor"></textarea>
+            </div>
 
-            <div class="stdin-container">
-              <label for="stdinInput">Standard Input (cin stream):</label>
-              <input type="text" id="stdinInput" placeholder="Enter values separated by newline or space for cin queries...">
+            <div class="stdin-container" id="stdinContainer">
+              <div class="stdin-header">
+                <label for="stdinInput">Standard Input (cin stream):</label>
+                <span class="stdin-hint">Piped into cin &amp; getline</span>
+              </div>
+              <textarea id="stdinInput" rows="2" placeholder="Type values for cin queries here (separated by space or newline)..." aria-label="Standard Input stream for cin"></textarea>
             </div>
 
             <div class="terminal-container">

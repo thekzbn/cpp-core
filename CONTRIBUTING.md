@@ -36,7 +36,48 @@ The foundational curriculum follows the conceptual topic outline of Mike Dane's 
 1. Fork the repository.
 2. Create a branch with a name that describes the change, such as `fix/clang-detection-windows` or `lesson/correct-module-9-example`.
 3. Test your changes. Run `node dev_server.js` or `python dev_server.py`, open [http://localhost:8000](http://localhost:8000), and check that nothing is broken.
-4. Open a pull request explaining what you changed and why. For bug fixes, include the OS and browser you tested on.
+4. Format your commit messages according to the repository convention below.
+5. Open a pull request explaining what you changed and why. For bug fixes, include the OS and browser you tested on.
+
+---
+
+## Commit Message Convention
+
+All commits in this repository must follow this structured format:
+
+```text
+<tag>(<scope>): <commit title>
+
+Message:
+- <what the changes were for: motivation / purpose>
+- <what the changes were for: user or technical benefit>
+
+Changes:
+- <what changes there were: specific file or logic modifications>
+- <what changes there were: additions or removals>
+```
+
+### Tags
+- `feat`: New feature or user-facing capability
+- `fix`: Bug fix or error resolution
+- `docs`: Documentation, README, or case study changes
+- `style`: Interface or CSS styling conforming to Quing `slate`
+- `refactor`: Code improvements with no behavior changes
+- `chore`: Tooling, build scripts, or repo maintenance
+
+### Example
+```text
+feat(toolchain): add portable GCC setup assistant
+
+Message:
+- Streamline local toolchain onboarding for beginners on Windows
+- Remove manual PATH configuration friction and heavy MSYS2 requirements
+
+Changes:
+- Add /api/setup/action endpoint in dev_server.js for portable w64devkit downloads
+- Add in-app Setup Assistant dialog to Workspace panel
+- Update compiler detection order to prioritize local portable toolchain
+```
 
 ---
 

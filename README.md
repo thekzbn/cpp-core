@@ -38,11 +38,15 @@ There is no frontend framework, bundler, or `npm install` requirement. The appli
 
 Additional features include:
 
+- Code editor and lesson explanation code blocks with line numbers.
+- Standard input stream support (`std::cin` & `std::getline`) with live buffer clearing (`cin.ignore()`).
 - Fill-in-the-blank code drills based on real C++ templates, with immediate validation.
 - Multiple-choice quizzes with explanations at the end of each lesson.
 - A local workspace folder configured through the **Workspace** button in the navigation bar, with an **Open in VS Code** option for lesson files.
+- Desktop standalone application (`Quing C++ Core.exe`) with Authenticode digital signature.
+- In-app 1-click toolchain setup for portable GCC (`w64devkit` ~35MB), LLVM Clang, and VS Code.
 - Direct `.cpp` export for any lesson.
-- Light and dark themes with persistent preferences.
+- Light and dark themes with persistent preferences and mobile-responsive settings drawer.
 - Multiple accent colours, including `dodgerblue`, `tomato`, `emerald`, and `violet`, built on the Quing `slate` foundation.
 - **From C to C++** callouts in every lesson for learners with prior C experience.
 
@@ -112,51 +116,65 @@ The browser simulator is a fallback, not the primary execution mode. It makes th
 
 ## Setup
 
-Native execution requires a compatible C++ compiler and either Node.js or Python to run the companion server. A modern browser is needed for the tutorial itself.
+C++ Core supports three ways to run across Windows, macOS, and Linux:
 
-### Windows
+### 1. Direct Web / Offline Mode (Any OS — Zero Install)
+You can open **`index.html`** directly in any web browser (Chrome, Firefox, Safari, Edge) on **Windows, macOS, or Linux**:
+- Requires **zero installations**, zero servers, and works 100% offline.
+- Runs all exercises and lessons using the built-in browser C++ simulator.
 
-Install MSYS2 for GCC:
+---
+
+### 2. Windows (Desktop App & 1-Click Pipeline Setup)
+
+1. Double-click **`Quing C++ Core.exe`** (or run `start_server.bat` if you prefer your default browser).
+   - Silently boots the companion server and opens the tutorial in a distraction-free native desktop window.
+2. In the navigation bar, click **Workspace**:
+   - The assistant auto-detects what is already installed on your PC.
+   - If a tool is already installed (like VS Code or existing GCC/Clang), it shows **Installed ✓** and will never attempt a redundant install.
+   - If you need a compiler, click **Install Portable GCC (~35MB)** for an instant zero-install C++17 compiler (zero admin rights, zero PATH editing, microscopic footprint on modest PCs).
+   - Alternatively, click **Install LLVM** or **Install VS Code** to trigger automatic installation via `winget`.
+
+If running manually from terminal:
 
 ```powershell
-winget install -e --id MSYS2.MSYS2
+node dev_server.js
+# Or with Python:
+python dev_server.py
 ```
 
-Open the MSYS2 UCRT64 terminal and install GCC:
+---
+
+### 3. macOS & Linux
+
+Run the launcher script:
 
 ```bash
-pacman -S --noconfirm mingw-w64-ucrt-x86_64-gcc
+chmod +x start_server.sh
+./start_server.sh
 ```
+This automatically boots the server and opens `http://localhost:8000` in your default browser.
 
-Add `C:\msys64\ucrt64\bin` to your `PATH`.
-
-Alternatively, install LLVM Clang:
-
-```powershell
-winget install -e --id LLVM.LLVM
-```
-
-Install Node.js for the Node.js companion server:
-
-```powershell
-winget install -e --id OpenJS.NodeJS.LTS
-```
-
-VS Code is optional:
-
-```powershell
-winget install -e --id Microsoft.VisualStudioCode
-```
-
-### macOS
-
-Install the Xcode Command Line Tools:
+#### Compiler Setup for macOS
+Install the Xcode Command Line Tools (Apple Clang):
 
 ```bash
 xcode-select --install
 ```
 
-You can optionally install GCC through Homebrew:
+#### Compiler Setup for Linux
+Install GCC using your distribution's package manager:
+
+```bash
+# Debian / Ubuntu / Mint:
+sudo apt update && sudo apt install -y g++
+
+# Arch / Manjaro:
+sudo pacman -S gcc
+
+# Fedora / RHEL:
+sudo dnf install gcc-c++
+```
 
 ```bash
 brew install gcc

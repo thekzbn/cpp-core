@@ -22,3 +22,22 @@ Guidelines for developing and maintaining the Quing learn (`learn.quing`) C++ In
 - Custom theme-based scrollbars matching active contrast tokens.
 - Native File System Access API and companion server for direct local project folder synchronization without downloads folder redirection.
 - Execution Engine: Native local compilation via zero-dependency companion server (`dev_server.js` / `dev_server.py`) with 8-second watchdog cutoff and automatic fallback to browser simulation when offline.
+- Desktop App: Standalone Windows executable launcher (`Quing C++ Core.exe`) with Authenticode digital signature, auto-detecting Chromium app mode or dedicated browser window.
+- Code Presentation: Synchronized line numbers on the code editor gutter and line-numbered syntax blocks on all lesson explanations.
+- Standard Input: Multi-line `cin` / `getline` stream support across both native execution and simulator.
+- Responsive Navigation: Mobile header collapses settings into a dedicated Quing Slate modal.
+
+## Commit Message Convention
+Format all commits as:
+```text
+<tag>(<scope>): <commit title>
+
+Message:
+- <what the changes were for: motivation / purpose>
+- <what the changes were for: benefits / context>
+
+Changes:
+- <what changes there were: specific file or logic modifications>
+- <what changes there were: additions or removals>
+```
+Tags: `feat`, `fix`, `docs`, `style`, `refactor`, `chore`.

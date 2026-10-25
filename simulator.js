@@ -132,28 +132,44 @@ class CppSimulator {
       stdout.push(args.join(""));
     };
 
-    // Prepare stdin tokens
-    const stdinTokens = [];
-    const rawLines = (inputString || "").split("\n");
-    for (const line of rawLines) {
-      const parts = line.trim().split(/\s+/).filter(Boolean);
-      for (const p of parts) stdinTokens.push(p);
-    }
-    let rawLineIdx = 0;
+    // Prepare C++ Stdin Stream
+    let streamPos = 0;
+    const streamBuffer = inputString || "";
 
     const readCin = () => {
-      if (stdinTokens.length > 0) {
-        const val = stdinTokens.shift();
-        return isNaN(val) ? val : Number(val);
+      // Skip leading whitespace (spaces, tabs, newlines)
+      while (streamPos < streamBuffer.length && /\s/.test(streamBuffer[streamPos])) {
+        streamPos++;
       }
-      return 0;
+      if (streamPos >= streamBuffer.length) return "";
+      let start = streamPos;
+      while (streamPos < streamBuffer.length && !/\s/.test(streamBuffer[streamPos])) {
+        streamPos++;
+      }
+      const token = streamBuffer.substring(start, streamPos);
+      return (token !== "" && !isNaN(token)) ? Number(token) : token;
     };
 
     const readLine = () => {
-      if (rawLineIdx < rawLines.length) {
-        return rawLines[rawLineIdx++];
+      if (streamPos >= streamBuffer.length) return "";
+      let start = streamPos;
+      let nextNl = streamBuffer.indexOf("\n", start);
+      if (nextNl === -1) {
+        streamPos = streamBuffer.length;
+        return streamBuffer.substring(start).replace(/\r$/, "");
       }
-      return "";
+      streamPos = nextNl + 1;
+      return streamBuffer.substring(start, nextNl).replace(/\r$/, "");
+    };
+
+    const ignoreCin = () => {
+      if (streamPos >= streamBuffer.length) return;
+      let nextNl = streamBuffer.indexOf("\n", streamPos);
+      if (nextNl === -1) {
+        streamPos = streamBuffer.length;
+      } else {
+        streamPos = nextNl + 1;
+      }
     };
 
     // Strip comments
@@ -265,23 +281,26 @@ class CppSimulator {
 
         // Handle cin.ignore()
         if (line.includes("cin.ignore()")) {
-          out.push(`/* cin.ignore() */;`);
+          out.push(`__ignoreCin();`);
           continue;
         }
 
-        // Handle getline(cin, var)
-        const getlineMatch = line.match(/getline\s*\(\s*cin\s*,\s*([a-zA-Z_]\w*)\s*\)\s*;/);
+        // Handle getline(cin, var) or getline(std::cin, var)
+        const getlineMatch = line.match(/getline\s*\(\s*(?:std::)?cin\s*,\s*([a-zA-Z_]\w*)\s*\)\s*;/);
         if (getlineMatch) {
           out.push(`${getlineMatch[1]} = __readLine();`);
           continue;
         }
 
-        // Handle cin >> a >> b;
-        if (line.startsWith("cin") && line.includes(">>")) {
-          const targets = line.replace(/^cin\s*>>/, "").replace(/;$/, "").split(">>");
+        // Handle cin >> a >> b; (with or without std::)
+        if (/(?:std::)?cin\s*>>/.test(line)) {
+          const cleanLine = line.replace(/^(?:std::)?cin\s*>>/, "").replace(/;$/, "");
+          const targets = cleanLine.split(">>");
           for (let target of targets) {
             target = target.trim();
-            out.push(`${target} = __readCin();`);
+            if (target) {
+              out.push(`${target} = __readCin();`);
+            }
           }
           continue;
         }
@@ -401,9 +420,10 @@ class CppSimulator {
         "__nativePrint",
         "__readCin",
         "__readLine",
+        "__ignoreCin",
         fullScript
       );
-      runner(print, readCin, readLine);
+      runner(print, readCin, readLine, ignoreCin);
       return stdout.join("");
     } catch (evalErr) {
       // Fallback for syntax difference or specific simulation

@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const editorFilename = document.getElementById("editorFilename");
   const codeEditor = document.getElementById("codeEditor");
+  const editorGutter = document.getElementById("editorGutter");
   const stdinInput = document.getElementById("stdinInput");
   const runCodeBtn = document.getElementById("runCodeBtn");
   const resetCodeBtn = document.getElementById("resetCodeBtn");
@@ -150,10 +151,43 @@ document.addEventListener("DOMContentLoaded", () => {
     applyTheme(activeTheme === "dark" ? "light" : "dark");
   });
 
-  // Sidebar Mobile Toggle
+  // Sidebar Toggle (Mobile drawer & Desktop collapse)
   sidebarToggle.addEventListener("click", () => {
-    sidebar.classList.toggle("open");
+    if (window.innerWidth <= 900) {
+      sidebar.classList.toggle("open");
+    } else {
+      sidebar.classList.toggle("collapsed");
+    }
   });
+
+  // Line Numbers / Gutter
+  function updateGutter() {
+    if (!editorGutter || !codeEditor) return;
+    const lineCount = codeEditor.value.split("\n").length;
+    const existing = editorGutter.children.length;
+    if (existing < lineCount) {
+      for (let i = existing + 1; i <= lineCount; i++) {
+        const span = document.createElement("span");
+        span.textContent = i;
+        editorGutter.appendChild(span);
+      }
+    } else if (existing > lineCount) {
+      while (editorGutter.children.length > lineCount) {
+        editorGutter.removeChild(editorGutter.lastChild);
+      }
+    }
+    // Sync gutter scroll with editor
+    editorGutter.style.height = getComputedStyle(codeEditor).height;
+    editorGutter.scrollTop = codeEditor.scrollTop;
+  }
+
+  if (codeEditor) {
+    codeEditor.addEventListener("input", updateGutter);
+    codeEditor.addEventListener("scroll", () => {
+      if (editorGutter) editorGutter.scrollTop = codeEditor.scrollTop;
+    });
+    codeEditor.addEventListener("keydown", updateGutter);
+  }
 
   // Helper: Escape HTML in search output
   function escapeHtml(str) {
@@ -401,6 +435,23 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNav(e.target.value);
   });
 
+  // Add line numbers to explanatory <pre><code> blocks
+  function addLineNumbersToCodeBlocks(container) {
+    if (!container) return;
+    container.querySelectorAll("pre code").forEach(block => {
+      if (block.dataset.numbered) return;
+      block.dataset.numbered = "true";
+      const rawHtml = block.innerHTML;
+      const lines = rawHtml.split("\n");
+      if (lines.length > 1 && lines[lines.length - 1].trim() === "") {
+        lines.pop();
+      }
+      block.innerHTML = lines.map((line, idx) =>
+        `<span class="code-line"><span class="line-num" aria-hidden="true">${idx + 1}</span><span class="line-text">${line || "&nbsp;"}</span></span>`
+      ).join("");
+    });
+  }
+
   // Load Lesson by Index
   function loadLesson(index) {
     if (index < 0 || index >= LESSONS_DATA.length) return;
@@ -417,13 +468,30 @@ document.addEventListener("DOMContentLoaded", () => {
     lessonSummary.textContent = lesson.summary;
     cBridgeText.textContent = lesson.cBridge;
     lessonBody.innerHTML = lesson.content;
+    addLineNumbersToCodeBlocks(lessonBody);
     applyReadingFont(readingFont);
 
     // Update Simulator
     const filename = `${lesson.fileSlug}.cpp`;
     editorFilename.textContent = filename;
     codeEditor.value = lesson.starterCode;
-    stdinInput.value = "";
+    updateGutter();
+    const hasCin = /(?:std::)?cin\s*>>|getline\s*\(\s*(?:std::)?cin/.test(lesson.starterCode);
+    const stdinContainer = document.getElementById("stdinContainer");
+    if (stdinContainer) {
+      if (hasCin) {
+        stdinContainer.classList.add("active-stream");
+      } else {
+        stdinContainer.classList.remove("active-stream");
+      }
+    }
+    if (lesson.defaultStdin) {
+      stdinInput.value = lesson.defaultStdin;
+    } else if (lesson.fileSlug === "06_user_input") {
+      stdinInput.value = "25\nAda Lovelace";
+    } else {
+      stdinInput.value = "";
+    }
     setTerminalOutput(`Ready. Press 'Run' or Ctrl+Enter to execute ${filename}`);
     terminalStatus.textContent = "Idle";
     terminalStatus.className = "terminal-status-idle";
@@ -757,38 +825,154 @@ document.addEventListener("DOMContentLoaded", () => {
   workspaceRootInput.value = workspaceRoot;
   currentRootDisplay.textContent = workspaceRoot;
 
-  // Check Companion Server & Local Compiler
+  // DOM elements for Pipeline Setup Assistant
+  const setupServerDot = document.getElementById("setupServerDot");
+  const setupServerStatus = document.getElementById("setupServerStatus");
+  const setupCompilerDot = document.getElementById("setupCompilerDot");
+  const setupCompilerStatus = document.getElementById("setupCompilerStatus");
+  const compilerActions = document.getElementById("compilerActions");
+  const setupVscodeDot = document.getElementById("setupVscodeDot");
+  const setupVscodeStatus = document.getElementById("setupVscodeStatus");
+  const vscodeActions = document.getElementById("vscodeActions");
+  const setupTerminalBox = document.getElementById("setupTerminalBox");
+  const setupTerminalTitle = document.getElementById("setupTerminalTitle");
+  const setupTerminalStatus = document.getElementById("setupTerminalStatus");
+  const setupTerminalLog = document.getElementById("setupTerminalLog");
+  const btnInstallPortableGcc = document.getElementById("btnInstallPortableGcc");
+  const btnInstallLlvm = document.getElementById("btnInstallLlvm");
+  const btnInstallVscode = document.getElementById("btnInstallVscode");
+
+  // Check Companion Server & System Pipeline Status
   async function checkCompanionServer() {
-    if (!serverStatusDot || !serverStatusText) return false;
     try {
-      const resp = await fetch("http://localhost:8000/api/status");
+      const resp = await fetch("http://localhost:8000/api/system-status");
       if (resp.ok) {
         const data = await resp.json();
-        serverStatusDot.className = "status-indicator-dot connected";
+
+        // 1. Companion Server
+        if (setupServerDot) setupServerDot.className = "status-indicator-dot connected";
+        if (setupServerStatus) setupServerStatus.textContent = `Active on port ${data.server.port || 8000}`;
+
+        // 2. C++ Compiler
         if (data.compiler) {
-          serverStatusText.textContent = `Companion Server Active: Native ${data.compiler} ready (${data.compilerVersion || ""})`;
+          if (setupCompilerDot) setupCompilerDot.className = "status-indicator-dot connected";
+          if (setupCompilerStatus) {
+            setupCompilerStatus.textContent = `${data.compiler.display || "Native C++"} (${data.compiler.version || ""})`;
+          }
+          if (compilerActions) compilerActions.style.display = "none";
           if (compilerBadge) {
-            compilerBadge.textContent = `Native ${data.compiler}`;
+            compilerBadge.textContent = data.compiler.display || "Native C++";
             compilerBadge.className = "compiler-badge mode-native";
           }
         } else {
-          serverStatusText.textContent = "Companion Server Active: No g++ or clang++ detected on PATH (See setup commands below).";
+          if (setupCompilerDot) setupCompilerDot.className = "status-indicator-dot standalone";
+          if (setupCompilerStatus) {
+            setupCompilerStatus.textContent = "No compiler found on system. Choose an option below:";
+          }
+          if (compilerActions) compilerActions.style.display = "flex";
           if (compilerBadge) {
-            compilerBadge.textContent = "No Compiler on PATH";
+            compilerBadge.textContent = "No Compiler";
             compilerBadge.className = "compiler-badge mode-warn";
           }
         }
+
+        // 3. VS Code
+        if (data.vscode && data.vscode.installed) {
+          if (setupVscodeDot) setupVscodeDot.className = "status-indicator-dot connected";
+          if (setupVscodeStatus) {
+            setupVscodeStatus.textContent = `Installed (${data.vscode.version || "Ready"})`;
+          }
+          if (vscodeActions) vscodeActions.style.display = "none";
+        } else {
+          if (setupVscodeDot) setupVscodeDot.className = "status-indicator-dot standalone";
+          if (setupVscodeStatus) {
+            setupVscodeStatus.textContent = "Not detected on system. Install with 1-click below:";
+          }
+          if (vscodeActions) vscodeActions.style.display = "flex";
+        }
+
         return true;
       }
     } catch (e) {
-      serverStatusDot.className = "status-indicator-dot standalone";
-      serverStatusText.textContent = "Companion Server Offline (Run 'node dev_server.js' in terminal for native GCC).";
+      if (setupServerDot) setupServerDot.className = "status-indicator-dot standalone";
+      if (setupServerStatus) setupServerStatus.textContent = "Companion Server Offline (Run Quing C++ Core.exe or 'node dev_server.js')";
+      if (setupCompilerDot) setupCompilerDot.className = "status-indicator-dot standalone";
+      if (setupCompilerStatus) setupCompilerStatus.textContent = "Companion server required for native compiler detection";
       if (compilerBadge) {
         compilerBadge.textContent = "Simulator";
         compilerBadge.className = "compiler-badge mode-sim";
       }
       return false;
     }
+  }
+
+  // Stream setup action helper
+  async function runSetupAction(actionName, title) {
+    if (!setupTerminalBox || !setupTerminalLog) return;
+    setupTerminalBox.classList.remove("hidden");
+    setupTerminalTitle.textContent = title;
+    setupTerminalStatus.textContent = "Running...";
+    setupTerminalStatus.className = "terminal-status-running";
+    setupTerminalLog.textContent = `Starting ${title}...\n`;
+
+    try {
+      const resp = await fetch("http://localhost:8000/api/setup/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: actionName })
+      });
+
+      if (!resp.ok) {
+        setupTerminalLog.textContent += `\nError: Server returned HTTP ${resp.status}`;
+        setupTerminalStatus.textContent = "Error";
+        setupTerminalStatus.className = "terminal-status-idle";
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        setupTerminalLog.textContent += decoder.decode(value, { stream: true });
+        setupTerminalLog.scrollTop = setupTerminalLog.scrollHeight;
+      }
+
+      setupTerminalStatus.textContent = "Completed";
+      setupTerminalStatus.className = "terminal-status-success";
+      showToast(`${title} finished.`);
+      // Refresh system status to update UI indicators
+      setTimeout(checkCompanionServer, 1000);
+    } catch (err) {
+      setupTerminalLog.textContent += `\nNetwork/Execution Error: ${err.message}`;
+      setupTerminalStatus.textContent = "Error";
+      setupTerminalStatus.className = "terminal-status-idle";
+    }
+  }
+
+  if (btnInstallPortableGcc) {
+    btnInstallPortableGcc.addEventListener("click", () => {
+      runSetupAction("install-portable", "Portable GCC Toolchain Setup (~35MB)");
+    });
+  }
+
+  if (btnInstallLlvm) {
+    btnInstallLlvm.addEventListener("click", () => {
+      runSetupAction("install-llvm", "LLVM Clang++ Setup (winget)");
+    });
+  }
+
+  if (btnInstallVscode) {
+    btnInstallVscode.addEventListener("click", () => {
+      runSetupAction("install-vscode", "Visual Studio Code Setup (winget)");
+    });
+  }
+
+  // Click compiler badge to open setup assistant if no compiler
+  if (compilerBadge) {
+    compilerBadge.addEventListener("click", () => {
+      workspaceSettingsBtn.click();
+    });
   }
 
   // Browse and Link Folder Directly via File System API
@@ -919,7 +1103,216 @@ document.addEventListener("DOMContentLoaded", () => {
     showToast(`Exported ${lesson.fileSlug}.cpp to your Downloads folder.`);
   });
 
+  // Mobile Preferences & Settings Menu
+  const mobileSettingsBtn = document.getElementById("mobileSettingsBtn");
+  const mobileSettingsDialog = document.getElementById("mobileSettingsDialog");
+  const closeMobileSettingsBtn = document.getElementById("closeMobileSettingsBtn");
+  const mobileThemeToggleBtn = document.getElementById("mobileThemeToggleBtn");
+  const mobileThemeLabel = document.getElementById("mobileThemeLabel");
+  const mobileColorPickerStrip = document.getElementById("mobileColorPickerStrip");
+  const mobileReadingFontToggleBtn = document.getElementById("mobileReadingFontToggleBtn");
+  const mobileReadingFontLabel = document.getElementById("mobileReadingFontLabel");
+  const mobileWorkspaceBtn = document.getElementById("mobileWorkspaceBtn");
+
+  if (mobileSettingsBtn && mobileSettingsDialog) {
+    mobileSettingsBtn.addEventListener("click", () => {
+      if (mobileThemeLabel) {
+        mobileThemeLabel.textContent = activeTheme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
+      }
+      if (mobileReadingFontLabel) {
+        mobileReadingFontLabel.textContent = readingFont === "serif" ? "Article Font: Serif (Merriweather)" : "Article Font: Sans (Inter)";
+      }
+      if (mobileColorPickerStrip) {
+        const swatches = mobileColorPickerStrip.querySelectorAll(".color-swatch-btn");
+        swatches.forEach(btn => {
+          if (btn.getAttribute("data-color") === activeAccent) {
+            btn.classList.add("active");
+          } else {
+            btn.classList.remove("active");
+          }
+        });
+      }
+      mobileSettingsDialog.showModal();
+    });
+
+    if (closeMobileSettingsBtn) {
+      closeMobileSettingsBtn.addEventListener("click", () => {
+        mobileSettingsDialog.close();
+      });
+    }
+
+    if (mobileThemeToggleBtn) {
+      mobileThemeToggleBtn.addEventListener("click", () => {
+        const nextTheme = activeTheme === "dark" ? "light" : "dark";
+        applyTheme(nextTheme);
+        if (mobileThemeLabel) {
+          mobileThemeLabel.textContent = nextTheme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
+        }
+      });
+    }
+
+    if (mobileReadingFontToggleBtn) {
+      mobileReadingFontToggleBtn.addEventListener("click", () => {
+        const nextFont = readingFont === "serif" ? "sans" : "serif";
+        applyReadingFont(nextFont);
+        if (mobileReadingFontLabel) {
+          mobileReadingFontLabel.textContent = nextFont === "serif" ? "Article Font: Serif (Merriweather)" : "Article Font: Sans (Inter)";
+        }
+      });
+    }
+
+    if (mobileColorPickerStrip) {
+      mobileColorPickerStrip.addEventListener("click", (e) => {
+        const btn = e.target.closest(".color-swatch-btn");
+        if (!btn) return;
+        const color = btn.getAttribute("data-color");
+        applyAccentColor(color);
+        const allSwatches = document.querySelectorAll(".color-swatch-btn");
+        allSwatches.forEach(b => {
+          if (b.getAttribute("data-color") === color) b.classList.add("active");
+          else b.classList.remove("active");
+        });
+      });
+    }
+
+    if (mobileWorkspaceBtn) {
+      mobileWorkspaceBtn.addEventListener("click", () => {
+        mobileSettingsDialog.close();
+        workspaceSettingsBtn.click();
+      });
+    }
+  }
+
+  // Desktop App First-Run Setup (ONLY for desktop app users with ?app=1, shown ONCE)
+  const firstRunAppDialog = document.getElementById("firstRunAppDialog");
+  const firstRunCompleteBtn = document.getElementById("firstRunCompleteBtn");
+  const firstRunCompilerDot = document.getElementById("firstRunCompilerDot");
+  const firstRunCompilerStatus = document.getElementById("firstRunCompilerStatus");
+  const firstRunCompilerActions = document.getElementById("firstRunCompilerActions");
+  const firstRunVscodeDot = document.getElementById("firstRunVscodeDot");
+  const firstRunVscodeStatus = document.getElementById("firstRunVscodeStatus");
+  const firstRunVscodeActions = document.getElementById("firstRunVscodeActions");
+  const firstRunTerminalBox = document.getElementById("firstRunTerminalBox");
+  const firstRunTerminalTitle = document.getElementById("firstRunTerminalTitle");
+  const firstRunTerminalStatus = document.getElementById("firstRunTerminalStatus");
+  const firstRunTerminalLog = document.getElementById("firstRunTerminalLog");
+  const firstRunBtnInstallGcc = document.getElementById("firstRunBtnInstallGcc");
+  const firstRunBtnInstallLlvm = document.getElementById("firstRunBtnInstallLlvm");
+  const firstRunBtnInstallVscode = document.getElementById("firstRunBtnInstallVscode");
+
+  async function checkFirstRunApp() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isApp = urlParams.get("app") === "1" || window.location.hash === "#app";
+    const setupCompleted = localStorage.getItem("quing_app_setup_completed") === "true";
+
+    if (!isApp || setupCompleted || !firstRunAppDialog) return;
+
+    try {
+      const resp = await fetch("http://localhost:8000/api/system-status");
+      if (resp.ok) {
+        const data = await resp.json();
+
+        if (data.compiler) {
+          if (firstRunCompilerDot) firstRunCompilerDot.className = "status-indicator-dot connected";
+          if (firstRunCompilerStatus) firstRunCompilerStatus.textContent = `${data.compiler.display || "Native C++"} (${data.compiler.version || ""})`;
+          if (firstRunCompilerActions) firstRunCompilerActions.style.display = "none";
+        } else {
+          if (firstRunCompilerDot) firstRunCompilerDot.className = "status-indicator-dot standalone";
+          if (firstRunCompilerStatus) firstRunCompilerStatus.textContent = "No compiler found on system";
+          if (firstRunCompilerActions) firstRunCompilerActions.style.display = "flex";
+        }
+
+        if (data.vscode && data.vscode.installed) {
+          if (firstRunVscodeDot) firstRunVscodeDot.className = "status-indicator-dot connected";
+          if (firstRunVscodeStatus) firstRunVscodeStatus.textContent = `Installed (${data.vscode.version || "Ready"})`;
+          if (firstRunVscodeActions) firstRunVscodeActions.style.display = "none";
+        } else {
+          if (firstRunVscodeDot) firstRunVscodeDot.className = "status-indicator-dot standalone";
+          if (firstRunVscodeStatus) firstRunVscodeStatus.textContent = "Not detected on system";
+          if (firstRunVscodeActions) firstRunVscodeActions.style.display = "flex";
+        }
+
+        firstRunAppDialog.showModal();
+      }
+    } catch (e) {}
+  }
+
+  async function runFirstRunAction(actionName, title) {
+    if (!firstRunTerminalBox || !firstRunTerminalLog) return;
+    firstRunTerminalBox.classList.remove("hidden");
+    firstRunTerminalTitle.textContent = title;
+    firstRunTerminalStatus.textContent = "Running...";
+    firstRunTerminalStatus.className = "terminal-status-running";
+    firstRunTerminalLog.textContent = `Starting ${title}...\n`;
+
+    try {
+      const resp = await fetch("http://localhost:8000/api/setup/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: actionName })
+      });
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        firstRunTerminalLog.textContent += decoder.decode(value, { stream: true });
+        firstRunTerminalLog.scrollTop = firstRunTerminalLog.scrollHeight;
+      }
+
+      firstRunTerminalStatus.textContent = "Completed";
+      firstRunTerminalStatus.className = "terminal-status-success";
+      checkCompanionServer();
+      const resp2 = await fetch("http://localhost:8000/api/system-status");
+      if (resp2.ok) {
+        const d2 = await resp2.json();
+        if (d2.compiler && firstRunCompilerActions) {
+          firstRunCompilerActions.style.display = "none";
+          firstRunCompilerDot.className = "status-indicator-dot connected";
+          firstRunCompilerStatus.textContent = `${d2.compiler.display || "Native C++"} (Ready)`;
+        }
+        if (d2.vscode && d2.vscode.installed && firstRunVscodeActions) {
+          firstRunVscodeActions.style.display = "none";
+          firstRunVscodeDot.className = "status-indicator-dot connected";
+          firstRunVscodeStatus.textContent = "Installed (Ready)";
+        }
+      }
+    } catch (err) {
+      firstRunTerminalLog.textContent += `\nError: ${err.message}`;
+      firstRunTerminalStatus.textContent = "Error";
+      firstRunTerminalStatus.className = "terminal-status-idle";
+    }
+  }
+
+  if (firstRunBtnInstallGcc) {
+    firstRunBtnInstallGcc.addEventListener("click", () => {
+      runFirstRunAction("install-portable", "Portable GCC Setup (~35MB)");
+    });
+  }
+
+  if (firstRunBtnInstallLlvm) {
+    firstRunBtnInstallLlvm.addEventListener("click", () => {
+      runFirstRunAction("install-llvm", "LLVM Clang++ Setup (winget)");
+    });
+  }
+
+  if (firstRunBtnInstallVscode) {
+    firstRunBtnInstallVscode.addEventListener("click", () => {
+      runFirstRunAction("install-vscode", "Visual Studio Code Setup (winget)");
+    });
+  }
+
+  if (firstRunCompleteBtn) {
+    firstRunCompleteBtn.addEventListener("click", () => {
+      localStorage.setItem("quing_app_setup_completed", "true");
+      firstRunAppDialog.close();
+      showToast("Desktop setup complete. Welcome to C++ Core!");
+    });
+  }
+
   // Initialize First Lesson & Check Server
   loadLesson(0);
   checkCompanionServer();
+  checkFirstRunApp();
 });
