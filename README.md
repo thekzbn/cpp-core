@@ -2,7 +2,7 @@
 
 A browser-based, locally executed C++ tutorial platform. Part of the [Quing](https://quing.thekzbn.name.ng) open-source project.
 
-**Author:** [Ayomide Deji-Adeyale (@thekzbn)](https://thekzbn.name.ng) · **Curriculum source:** [Mike Dane / freeCodeCamp](https://www.youtube.com/watch?v=vLnPwxZdW4Y) · **Capstones inspired by:** Luis Foster
+**Author:** [Ayomide Deji-Adeyale (@thekzbn)](https://thekzbn.name.ng) · **Curriculum reference:** [Mike Dane / freeCodeCamp](https://www.youtube.com/watch?v=vLnPwxZdW4Y) (Foundational topics) · **Capstones inspired by:** Luis Foster
 
 ---
 
@@ -20,7 +20,7 @@ W3Schools had roughly the layout I wanted. Its side navigation and single scroll
 
 So I built the site myself: a static, single-page web application with an optional companion server that compiles code using the C++ toolchain already installed on your machine. Native execution keeps submitted code on your machine rather than sending it to a public compilation service. If the companion server is unavailable, a browser-based simulator provides a fallback for supported examples.
 
-For the curriculum, I took the full transcript of Mike Dane's C++ course, originally published by freeCodeCamp, and used Gemini 3.8 Flash and Claude Sonnet 4.6 (Thinking) to structure it into 30 interactive lessons with exercises, quizzes, and starter code. The four capstone projects at the end are inspired by Luis's original programs. They give learners something more substantial to work towards than isolated exercises.
+For the curriculum, I referenced the conceptual topic progression from Mike Dane's introductory C++ course (published by freeCodeCamp) as a syllabus outline for the foundational concepts, and worked with Gemini 3.8 Flash and Claude Sonnet 4.6 (Thinking) to write original explanations, transitional notes for C programmers, interactive fill-in-the-blank code drills, quizzes, and starter programs. The intermediate topics and four capstone projects at the end are inspired by Luis's original programs, giving learners substantial real-world applications to work towards.
 
 Some of the smaller decisions were personal, too. The VS Code integration and `.cpp` export exist because I knew I would use them. The theme switcher, custom scrollbars, and accent colour system reflect how much I care about intentional interface design. The overall layout is a direct reference to W3Schools, particularly the side navigation paired with a single scrolling content area.
 
@@ -210,10 +210,10 @@ Font files are in `fonts/`. Both font families are licensed under the SIL Open F
 
 ## Credits
 
-- **Curriculum:** Mike Dane / [freeCodeCamp](https://www.youtube.com/watch?v=vLnPwxZdW4Y).
+- **Foundational Curriculum Reference:** Topic outline based on Mike Dane / [freeCodeCamp](https://www.youtube.com/watch?v=vLnPwxZdW4Y).
 - **Capstone projects:** Inspired by original C++ programs by Luis Foster.
 - **Platform:** Ayomide Deji-Adeyale · [thekzbn.name.ng](https://thekzbn.name.ng) · [@thekzbn_me](https://x.com/thekzbn_me).
-- **AI assistance:** Gemini 3.8 Flash and Claude Sonnet 4.6 (Thinking), used to help structure lesson content and develop exercises and quizzes.
+- **AI assistance:** Gemini 3.8 Flash and Claude Sonnet 4.6 (Thinking), used to help write and structure original lesson content, exercises, and quizzes.
 - **Layout reference:** W3Schools.
 
 See [CREDITS.md](CREDITS.md) for full attribution details.

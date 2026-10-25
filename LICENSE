@@ -40,14 +40,16 @@ SIL Open Font License 1.1 is available at:
 
 ---
 
-Curriculum Attribution
-───────────────────────
+Curriculum & Content Attribution
+────────────────────────────────
 
-The lesson content in this platform is derived from the C++ tutorial by
-Mike Dane, originally published by freeCodeCamp.org:
+The introductory topic outline and conceptual sequence for the foundational
+modules (Lessons 1–20) reference the topics covered in the public tutorial:
 
-  "C++ Tutorial for Beginners - Full Course"
+  "C++ Tutorial for Beginners - Full Course" by Mike Dane / freeCodeCamp.org
   https://www.youtube.com/watch?v=vLnPwxZdW4Y
 
-Used for educational, non-commercial purposes. All lesson narrative, code
-examples, and exercise structure in this platform trace back to that tutorial.
+All lesson explanations, narratives, "From C to C++" insights, interactive
+drills, quizzes, starter code, and capstone implementations are original works
+created for C++ Core by the author (with AI assistance) and are licensed under
+the same MIT License above.

@@ -13,16 +13,16 @@ Responsible for the site architecture, interface design, companion servers, and 
 
 ---
 
-## Curriculum source
+## Curriculum references & conceptual outline
 
-The curriculum across all 30 lessons is derived from Mike Dane's C++ course, originally published by **freeCodeCamp.org**.
+The syllabus outline and conceptual topic progression for the foundational lessons (Lessons 1–20) reference the introductory C++ course by Mike Dane, originally published by **freeCodeCamp.org**:
 
 > **C++ Tutorial for Beginners – Full Course**  
 > [Watch on YouTube](https://www.youtube.com/watch?v=vLnPwxZdW4Y)
 
-The full video transcript was used as the primary source for lesson explanations, code examples, and exercise structure. The material was organised into an interactive curriculum with exercises, quizzes, and starter code, with assistance from Gemini and Claude.
+The course served as a reference for selecting and sequencing introductory programming topics. All lesson text, explanatory breakdowns, "From C to C++" transition notes, interactive fill-in-the-blank drills, quizzes, and starter code examples were written independently for this platform (with AI writing and structuring assistance), rather than reproducing the video transcript.
 
-The resulting lessons adapt the source material to the platform's format rather than reproducing the original course as a video transcript.
+The intermediate systems lessons (Lessons 21–23) and the capstone modules (Lessons 24–30) were conceived separately to bridge the gap between basic syntax and terminal-based systems programming.
 
 ## Capstone projects
 
@@ -32,12 +32,12 @@ The projects are a terminal Wordle game, a 2D elevation heat map renderer, a Boo
 
 ## AI assistance
 
-The development of lesson content, code examples, exercises, quizzes, and explanations was assisted by:
+The drafting and structuring of lesson explanations, code examples, interactive drills, quizzes, and transitional notes was assisted by:
 
 - **Google Gemini 3.8 Flash**
 - **Anthropic Claude Sonnet 4.6 (Thinking)**
 
-Both models were used to help structure and develop the curriculum from the source transcript. The platform's architecture, interface design, and companion-server approach were developed separately from this content-generation process.
+Both models were used as writing and curriculum-structuring assistants to help compose original explanations, generate drill challenges, and formulate quiz questions around core C++ concepts. The platform's architecture, interface design, simulator, and companion-server approach were developed independently.
 
 ## Layout reference
 

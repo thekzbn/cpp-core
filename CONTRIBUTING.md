@@ -8,7 +8,7 @@ C++ Core is a personal project I built to teach myself C++. I open-sourced it in
 
 C++ Core is a 30-lesson interactive C++ tutorial that runs as a static single-page web app. There is no framework, bundler, or package manager. The companion servers (`dev_server.js` and `dev_server.py`) use only built-in Node.js modules or Python's standard library.
 
-The curriculum is based on Mike Dane's C++ course published by freeCodeCamp, structured into interactive lessons with assistance from Gemini 3.8 Flash and Claude Sonnet 4.6 (Thinking). The capstone projects are adapted from work by Luis Foster.
+The foundational curriculum follows the conceptual topic outline of Mike Dane's introductory C++ course published by freeCodeCamp, with original lesson explanations, interactive exercises, drills, and quizzes developed with assistance from Gemini 3.8 Flash and Claude Sonnet 4.6 (Thinking). The capstone projects are adapted from work by Luis Foster.
 
 ---
 
