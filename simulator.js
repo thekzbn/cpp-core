@@ -94,6 +94,16 @@ class CppSimulator {
     }
   }
 
+  async runInteractive(sourceCode, inputString = "", callbacks = {}) {
+    this.outputBuffer = [];
+    try {
+      await this.executeCpp(sourceCode, inputString, callbacks);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+
   // Tokenize an expression by operator (ignoring operators inside string quotes)
   splitRespectingQuotes(str, delimiter) {
     const tokens = [];
@@ -126,7 +136,7 @@ class CppSimulator {
     return tokens;
   }
 
-  executeCpp(sourceCode, inputString) {
+  executeCpp(sourceCode, inputString, interactive = null) {
     const stdout = [];
     const print = (...args) => {
       stdout.push(args.join(""));
@@ -134,14 +144,30 @@ class CppSimulator {
 
     // Prepare C++ Stdin Stream
     let streamPos = 0;
-    const streamBuffer = inputString || "";
+    let streamBuffer = inputString || "";
+    if (interactive && streamBuffer && !streamBuffer.endsWith("\n")) streamBuffer += "\n";
+    const requestMoreInput = async () => {
+      if (!interactive || typeof interactive.requestInput !== "function") return "";
+      const answer = await interactive.requestInput();
+      streamBuffer += `${answer}\n`;
+    };
 
-    const readCin = () => {
-      // Skip leading whitespace (spaces, tabs, newlines)
-      while (streamPos < streamBuffer.length && /\s/.test(streamBuffer[streamPos])) {
-        streamPos++;
-      }
+    const readCinSync = () => {
+      while (streamPos < streamBuffer.length && /\s/.test(streamBuffer[streamPos])) streamPos++;
       if (streamPos >= streamBuffer.length) return "";
+      const start = streamPos;
+      while (streamPos < streamBuffer.length && !/\s/.test(streamBuffer[streamPos])) streamPos++;
+      const token = streamBuffer.substring(start, streamPos);
+      return (token !== "" && !isNaN(token)) ? Number(token) : token;
+    };
+    const readCinInteractive = async () => {
+      // Skip leading whitespace (spaces, tabs, newlines)
+      while (true) {
+        while (streamPos < streamBuffer.length && /\s/.test(streamBuffer[streamPos])) streamPos++;
+        if (streamPos < streamBuffer.length) break;
+        if (!interactive) return "";
+        await requestMoreInput();
+      }
       let start = streamPos;
       while (streamPos < streamBuffer.length && !/\s/.test(streamBuffer[streamPos])) {
         streamPos++;
@@ -149,11 +175,12 @@ class CppSimulator {
       const token = streamBuffer.substring(start, streamPos);
       return (token !== "" && !isNaN(token)) ? Number(token) : token;
     };
+    const readCin = interactive ? readCinInteractive : readCinSync;
 
-    const readLine = () => {
+    const readLineSync = () => {
       if (streamPos >= streamBuffer.length) return "";
-      let start = streamPos;
-      let nextNl = streamBuffer.indexOf("\n", start);
+      const start = streamPos;
+      const nextNl = streamBuffer.indexOf("\n", start);
       if (nextNl === -1) {
         streamPos = streamBuffer.length;
         return streamBuffer.substring(start).replace(/\r$/, "");
@@ -161,8 +188,31 @@ class CppSimulator {
       streamPos = nextNl + 1;
       return streamBuffer.substring(start, nextNl).replace(/\r$/, "");
     };
+    const readLineInteractive = async () => {
+      while (streamPos >= streamBuffer.length && interactive) await requestMoreInput();
+      if (streamPos >= streamBuffer.length) return "";
+      let start = streamPos;
+      let nextNl = streamBuffer.indexOf("\n", start);
+      while (nextNl === -1 && interactive) {
+        await requestMoreInput();
+        nextNl = streamBuffer.indexOf("\n", start);
+      }
+      if (nextNl === -1) {
+        streamPos = streamBuffer.length;
+        return streamBuffer.substring(start).replace(/\r$/, "");
+      }
+      streamPos = nextNl + 1;
+      return streamBuffer.substring(start, nextNl).replace(/\r$/, "");
+    };
+    const readLine = interactive ? readLineInteractive : readLineSync;
 
-    const ignoreCin = () => {
+    const ignoreCinSync = () => {
+      if (streamPos >= streamBuffer.length) return;
+      const nextNl = streamBuffer.indexOf("\n", streamPos);
+      streamPos = nextNl === -1 ? streamBuffer.length : nextNl + 1;
+    };
+    const ignoreCinInteractive = async () => {
+      while (streamPos >= streamBuffer.length && interactive) await requestMoreInput();
       if (streamPos >= streamBuffer.length) return;
       let nextNl = streamBuffer.indexOf("\n", streamPos);
       if (nextNl === -1) {
@@ -171,6 +221,7 @@ class CppSimulator {
         streamPos = nextNl + 1;
       }
     };
+    const ignoreCin = interactive ? ignoreCinInteractive : ignoreCinSync;
 
     // Strip comments
     let code = sourceCode
@@ -256,7 +307,7 @@ class CppSimulator {
     }
 
     // Transpile a C++ statement block
-    const transpileBlock = (lines) => {
+    const transpileBlock = (lines, allowAwait = false) => {
       const out = [];
 
       for (let i = 0; i < lines.length; i++) {
@@ -281,14 +332,14 @@ class CppSimulator {
 
         // Handle cin.ignore()
         if (line.includes("cin.ignore()")) {
-          out.push(`__ignoreCin();`);
+          out.push(`${allowAwait ? "await " : ""}__ignoreCin();`);
           continue;
         }
 
         // Handle getline(cin, var) or getline(std::cin, var)
         const getlineMatch = line.match(/getline\s*\(\s*(?:std::)?cin\s*,\s*([a-zA-Z_]\w*)\s*\)\s*;/);
         if (getlineMatch) {
-          out.push(`${getlineMatch[1]} = __readLine();`);
+          out.push(`${getlineMatch[1]} = ${allowAwait ? "await " : ""}__readLine();`);
           continue;
         }
 
@@ -299,7 +350,7 @@ class CppSimulator {
           for (let target of targets) {
             target = target.trim();
             if (target) {
-              out.push(`${target} = __readCin();`);
+              out.push(`${target} = ${allowAwait ? "await " : ""}__readCin();`);
             }
           }
           continue;
@@ -394,10 +445,11 @@ class CppSimulator {
       return out.join("\n");
     };
 
+    const isInteractive = Boolean(interactive);
     const transpiledCustomFns = transpileBlock(customFunctions);
-    const transpiledMain = transpileBlock(mainBody);
+    const transpiledMain = transpileBlock(mainBody, isInteractive);
 
-    const fullScript = `
+    const executionBody = `
       ${jsLines.join("\n")}
 
       function __print(...items) {
@@ -408,12 +460,15 @@ class CppSimulator {
 
       ${transpiledCustomFns}
 
-      function __runMain() {
+      ${isInteractive ? "async " : ""}function __runMain() {
         ${transpiledMain}
       }
 
-      __runMain();
+      ${isInteractive ? "await " : ""}__runMain();
     `;
+    const fullScript = isInteractive
+      ? `return (async () => { ${executionBody} })();`
+      : executionBody;
 
     try {
       const runner = new Function(
@@ -423,9 +478,18 @@ class CppSimulator {
         "__ignoreCin",
         fullScript
       );
+      if (isInteractive) {
+        const streamPrint = (...args) => {
+          const text = args.join("");
+          stdout.push(text);
+          interactive.onOutput?.(text);
+        };
+        return runner(streamPrint, readCin, readLine, ignoreCin);
+      }
       runner(print, readCin, readLine, ignoreCin);
       return stdout.join("");
     } catch (evalErr) {
+      if (isInteractive) throw evalErr;
       // Fallback for syntax difference or specific simulation
       return this.fallbackRegexRunner(sourceCode, inputString);
     }

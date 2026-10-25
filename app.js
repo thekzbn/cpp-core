@@ -42,6 +42,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const copyCodeBtn = document.getElementById("copyCodeBtn");
   const terminalStatus = document.getElementById("terminalStatus");
   const terminalOutput = document.getElementById("terminalOutput");
+  const terminalInputForm = document.getElementById("terminalInputForm");
+  const terminalInput = document.getElementById("terminalInput");
+  let pendingTerminalInput = null;
+  let interactiveOutput = "";
 
   const drillInstructions = document.getElementById("drillInstructions");
   const fillBlankContainer = document.getElementById("fillBlankContainer");
@@ -485,13 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
         stdinContainer.classList.remove("active-stream");
       }
     }
-    if (lesson.defaultStdin) {
-      stdinInput.value = lesson.defaultStdin;
-    } else if (lesson.fileSlug === "06_user_input") {
-      stdinInput.value = "25\nAda Lovelace";
-    } else {
-      stdinInput.value = "";
-    }
+    stdinInput.value = "";
     setTerminalOutput(`Ready. Press 'Run' or Ctrl+Enter to execute ${filename}`);
     terminalStatus.textContent = "Idle";
     terminalStatus.className = "terminal-status-idle";
@@ -741,19 +739,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setTerminalOutput(text) {
     terminalOutput.innerHTML = parseAnsiToHtml(text);
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
   }
 
   // Simulator Run Action (Native Execution with Simulation Fallback)
   async function executeSimulator() {
-    terminalStatus.textContent = "Compiling & Running...";
-    terminalStatus.className = "terminal-status-running";
-
     const source = codeEditor.value;
     const stdin = stdinInput.value;
+    const needsInput = /(?:std::)?cin\s*>>|getline\s*\(\s*(?:std::)?cin/.test(source);
+
+    terminalStatus.textContent = "Compiling & Running...";
+    terminalStatus.className = "terminal-status-running";
+    runCodeBtn.disabled = true;
+    terminalInputForm.hidden = true;
+    interactiveOutput = needsInput ? "[Mode: Browser Simulation | Interactive input]\n\n" : "";
+    if (needsInput) setTerminalOutput(interactiveOutput);
 
     try {
-      const res = await window.cppSimulator.runAsync(source, stdin);
-      setTerminalOutput(res.output);
+      let res;
+      if (needsInput) {
+        if (compilerBadge) {
+          compilerBadge.textContent = "Simulator";
+          compilerBadge.className = "compiler-badge mode-sim";
+        }
+        const startTime = performance.now();
+        res = await window.cppSimulator.runInteractive(source, stdin, {
+          onOutput: (text) => {
+            interactiveOutput += text;
+            setTerminalOutput(interactiveOutput);
+          },
+          requestInput: () => new Promise(resolve => {
+            pendingTerminalInput = resolve;
+            terminalInputForm.hidden = false;
+            terminalStatus.textContent = "Waiting for input";
+            terminalStatus.className = "terminal-status-running";
+            terminalInput.focus();
+          })
+        });
+        terminalInputForm.hidden = true;
+        if (res.success) {
+          interactiveOutput += `\n--------------------------------\nProcess finished with exit code 0 (${(performance.now() - startTime).toFixed(2)} ms)`;
+        } else {
+          interactiveOutput += `\nRuntime error: ${res.error}\nProcess terminated with exit code 1.`;
+        }
+        setTerminalOutput(interactiveOutput);
+      } else {
+        res = await window.cppSimulator.runAsync(source, stdin);
+        setTerminalOutput(res.output);
+      }
       terminalStatus.textContent = res.success ? "Success" : "Error";
       terminalStatus.className = res.success ? "terminal-status-success" : "terminal-status-idle";
 
@@ -773,10 +806,26 @@ document.addEventListener("DOMContentLoaded", () => {
       setTerminalOutput(`Execution Error:\n${err.message}`);
       terminalStatus.textContent = "Error";
       terminalStatus.className = "terminal-status-idle";
+    } finally {
+      runCodeBtn.disabled = false;
     }
   }
 
   runCodeBtn.addEventListener("click", executeSimulator);
+
+  terminalInputForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!pendingTerminalInput) return;
+    const answer = terminalInput.value;
+    const resolveInput = pendingTerminalInput;
+    pendingTerminalInput = null;
+    interactiveOutput += `> ${answer}\n`;
+    setTerminalOutput(interactiveOutput);
+    terminalInput.value = "";
+    terminalInputForm.hidden = true;
+    terminalStatus.textContent = "Running...";
+    resolveInput(answer);
+  });
 
   resetCodeBtn.addEventListener("click", () => {
     codeEditor.value = LESSONS_DATA[currentLessonIndex].starterCode;

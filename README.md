@@ -28,7 +28,7 @@ I am genuinely not sure how effective this will be for other people. I built it 
 
 ## What it is
 
-C++ Core is a 30-lesson interactive tutorial that runs in the browser. You write code in an editor, click Run, and the platform either compiles and executes it through your local `g++` or `clang++` compiler using the companion server, or falls back to a client-side simulator.
+C++ Core is a 42-lesson interactive tutorial that runs in the browser. You write code in an editor, click Run, and the platform either compiles and executes it through your local `g++` or `clang++` compiler using the companion server, or falls back to a client-side simulator.
 
 There is no frontend framework, bundler, or `npm install` requirement. The application is built with HTML, CSS, and JavaScript. Two alternative, zero-dependency companion servers are provided: one in Node.js and one in Python.
 
@@ -39,11 +39,11 @@ There is no frontend framework, bundler, or `npm install` requirement. The appli
 Additional features include:
 
 - Code editor and lesson explanation code blocks with line numbers.
-- Standard input stream support (`std::cin` & `std::getline`) with live buffer clearing (`cin.ignore()`).
+- Interactive standard input support (`std::cin` & `std::getline`) in the browser simulator, including stream buffer clearing with `cin.ignore()`.
 - Fill-in-the-blank code drills based on real C++ templates, with immediate validation.
 - Multiple-choice quizzes with explanations at the end of each lesson.
 - A local workspace folder configured through the **Workspace** button in the navigation bar, with an **Open in VS Code** option for lesson files.
-- Desktop standalone application (`Quing C++ Core.exe`) with Authenticode digital signature.
+- Windows launcher (`Quing C++ Core.exe`) included in the GitHub release package; the release launcher is currently unsigned.
 - In-app 1-click toolchain setup for portable GCC (`w64devkit` ~35MB), LLVM Clang, and VS Code.
 - Direct `.cpp` export for any lesson.
 - Light and dark themes with persistent preferences and mobile-responsive settings drawer.
@@ -99,6 +99,21 @@ Additional features include:
 28. Capstone 3: Boolean Algebra Evaluator & Truth Tables
 29. Gray Code & Karnaugh Map Fundamentals
 30. Capstone 4: Interactive Karnaugh Map (K-Map) Visualiser
+
+### Phase 7: Extended Foundations & Practice
+
+31. Constants & Type Casting
+32. Interactive BMI Calculator
+33. String Comparison & Advanced Methods
+34. Pass-by-Value vs Pass-by-Reference
+35. Exception Handling (try / catch / throw)
+36. Interactive Grade Calculator with Exception Handling
+37. Virtual Functions & Polymorphism
+38. Interactive Bank Account (OOP + Input)
+39. References vs Pointers Side-by-Side
+40. Interactive Word & Character Counter
+41. Function Overloading
+42. File I/O: Reading & Writing Files
 
 ## Execution architecture
 
@@ -213,6 +228,16 @@ On Windows, `start_server.bat` performs the equivalent of starting the Node.js s
 Open `index.html` directly in Chrome, Firefox, or Edge. The platform automatically switches to browser simulation mode when the companion server is unavailable.
 
 For code that needs a real compiler, use native execution instead.
+
+## Releases
+
+Download versioned portable packages and read the release notes on the
+[GitHub Releases page](https://github.com/thekzbn/cpp-core/releases). The
+Windows package includes the launcher; the portable package includes the app
+and server files for running it with Node.js or Python. The Windows launcher
+requires Node.js and an installed browser. The launcher is currently unsigned,
+so Windows may show an unknown-publisher warning. See [RELEASING.md](RELEASING.md)
+for how versions and packages are produced.
 
 ## Fonts
 

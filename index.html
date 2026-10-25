@@ -392,7 +392,7 @@
         <!-- Interactive C++ Simulator Section -->
         <section class="simulator-section">
           <h2>Interactive C++ Simulator</h2>
-          <p class="section-description">Edit the source code below, supply optional standard input, and run it in the simulated terminal execution environment.</p>
+          <p class="section-description">Run your code, then answer each <code>cin</code> or <code>getline</code> prompt directly in the terminal.</p>
 
           <div class="code-workspace">
             <div class="editor-header">
@@ -417,9 +417,9 @@
             <div class="stdin-container" id="stdinContainer">
               <div class="stdin-header">
                 <label for="stdinInput">Standard Input (cin stream):</label>
-                <span class="stdin-hint">Piped into cin &amp; getline</span>
+                <span class="stdin-hint">Optional input stream; leave blank to answer in the terminal</span>
               </div>
-              <textarea id="stdinInput" rows="2" placeholder="Type values for cin queries here (separated by space or newline)..." aria-label="Standard Input stream for cin"></textarea>
+              <textarea id="stdinInput" rows="2" placeholder="Example: 25&#10;Ada Lovelace" aria-label="Standard Input stream for cin and getline"></textarea>
             </div>
 
             <div class="terminal-container">
@@ -431,6 +431,11 @@
                 <span id="terminalStatus" class="terminal-status-idle">Idle</span>
               </div>
               <pre id="terminalOutput" class="terminal-screen"></pre>
+              <form id="terminalInputForm" class="terminal-input-form" hidden>
+                <label for="terminalInput">Program input</label>
+                <input id="terminalInput" type="text" autocomplete="off" spellcheck="false" aria-label="Input requested by the running C++ program">
+                <button type="submit" class="secondary-btn">Send</button>
+              </form>
             </div>
           </div>
         </section>

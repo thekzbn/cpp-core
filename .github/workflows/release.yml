@@ -1,0 +1,87 @@
+name: Build and publish release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package Windows and portable downloads
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+
+      - name: Validate release version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          if ($env:RELEASE_TAG -ne "v$version") {
+            throw "Tag $env:RELEASE_TAG does not match VERSION ($version)."
+          }
+
+      - name: Build Windows launcher
+        shell: pwsh
+        run: |
+          $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+          if (-not (Test-Path $compiler)) {
+            throw "The .NET Framework C# compiler was not found at $compiler."
+          }
+          & $compiler /nologo /target:winexe "/out:$env:RUNNER_TEMP\Quing C++ Core.exe" launcher.cs
+          if ($LASTEXITCODE -ne 0) {
+            throw "Launcher compilation failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Assemble packages and checksums
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          $dist = Join-Path $env:GITHUB_WORKSPACE 'dist'
+          $portable = Join-Path $env:RUNNER_TEMP 'quing-portable'
+          $windows = Join-Path $env:RUNNER_TEMP 'quing-windows'
+          New-Item -ItemType Directory -Force -Path $dist, $portable, $windows | Out-Null
+
+          $files = @(
+            'README.md', 'LICENSE', 'CREDITS.md', 'CHANGELOG.md', 'RELEASING.md', 'VERSION',
+            'index.html', 'style.css', 'app.js', 'lessons.js', 'simulator.js',
+            'dev_server.js', 'dev_server.py',
+            'start_server.bat', 'start_server.sh', 'stop_server.bat',
+            'fonts'
+          )
+          foreach ($file in $files) {
+            Copy-Item -Path $file -Destination $portable -Recurse -Force
+            Copy-Item -Path $file -Destination $windows -Recurse -Force
+          }
+          Copy-Item -Path "$env:RUNNER_TEMP\Quing C++ Core.exe" -Destination $windows -Force
+
+          $portableZip = Join-Path $dist "quing-cpp-core-$version-portable.zip"
+          $windowsZip = Join-Path $dist "quing-cpp-core-$version-windows-x64.zip"
+          Compress-Archive -Path (Join-Path $portable '*') -DestinationPath $portableZip -CompressionLevel Optimal
+          Compress-Archive -Path (Join-Path $windows '*') -DestinationPath $windowsZip -CompressionLevel Optimal
+
+          foreach ($archive in @($portableZip, $windowsZip)) {
+            $hash = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $(Split-Path $archive -Leaf)" | Set-Content -Path "$archive.sha256" -Encoding ascii
+          }
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $assets = Get-ChildItem -Path dist -File | ForEach-Object { $_.FullName }
+          if (-not $assets) {
+            throw 'No release assets were created.'
+          }
+          & gh release create $env:RELEASE_TAG @assets --generate-notes --verify-tag --title $env:RELEASE_TAG
+          if ($LASTEXITCODE -ne 0) {
+            throw "GitHub Release creation failed with exit code $LASTEXITCODE."
+          }

@@ -1,4 +1,7 @@
 // lessons.js - Complete curriculum based on FreeCodeCamp C++ Course
+// Extended curriculum: constants, casting, exception handling, virtual functions,
+// references, string comparison, pass-by-value vs pass-by-reference, and more
+// input-driven programs throughout.
 // Includes beginner explanations, C-bridge notes, interactive drills, and capstone projects.
 
 const LESSONS_DATA = [
@@ -868,7 +871,7 @@ const LESSONS_DATA = [
     title: "24. Capstone 1: Terminal Wordle with TrueColor Themes",
     summary: "Architect and build an interactive terminal Wordle game with custom TrueColor themes, 2-pass duplicate letter logic, and live keyboard tracking.",
     cBridge: "Building this project ties together namespaces, structs, vectors, ANSI TrueColor escape codes, string manipulation, and game loops into a cohesive, production-grade CLI application.",
-    content: "<h3>System Architecture of Terminal Wordle</h3>\n<p>Wordle is a world-famous word deduction game: the player has 6 attempts to guess a 5-letter hidden word. For each guess, the terminal provides color-coded feedback for every character:</p>\n<ul>\n  <li><strong style=\"color: #50fa7b;\">Green (Correct):</strong> The letter is in the secret word and at the exact position.</li>\n  <li><strong style=\"color: #f1fa8c;\">Yellow (Present):</strong> The letter is in the secret word, but in a different position.</li>\n  <li><strong style=\"color: #6272a4;\">Grey / Red (Absent):</strong> The letter is not in the secret word (or has already been accounted for).</li>\n</ul>\n\n<h3>The 2-Pass Duplicate Letter Algorithm</h3>\n<p>A classic bug in naive Wordle clones occurs with duplicate letters. For example, if the secret word is <code>APPLE</code> and the player guesses <code>PUPPY</code>, how many <code>P</code>s should turn yellow? <code>APPLE</code> only has <strong>two</strong> P's! A single-pass loop might highlight all three P's.</p>\n<p>The standard solution is a <strong>two-pass algorithm</strong>:</p>\n<ol>\n  <li><strong>Frequency Map:</strong> Count letter frequencies in the secret word.</li>\n  <li><strong>Pass 1 (Greens):</strong> Identify exact matches (<code>guess[i] == secret[i]</code>). Mark these positions as Green, and decrement the letter's available count.</li>\n  <li><strong>Pass 2 (Yellows &amp; Greys):</strong> For positions not yet marked Green: if the letter exists in the pool with available count &gt; 0, mark it Yellow and decrement; otherwise mark it Grey/Absent.</li>\n</ol>\n\n<h3>Live Keyboard Letter Matrix</h3>\n<p>To provide great UX, our implementation displays a live keyboard tracker showing which letters from A to Z are known-good, misplaced, or eliminated, so the player never re-enters dead letters!</p>",
+    content: "<h3>Build the Game in Reliable Steps</h3>\n<p>Start with one fixed secret word and one round. First read a complete line with <code>std::getline</code>, trim or reject extra characters, convert safely to uppercase, and accept only a five-letter guess. Invalid input should explain the expected format and should not consume an attempt. After that works, add the six-attempt loop, then the two-pass duplicate-letter feedback, then a keyboard summary, and finally a replay prompt. Keep the secret, attempt count, feedback, and keyboard state in local variables; use small functions for input, scoring, and display.</p>\n<p>The starter code below demonstrates the scoring and display stages with sample guesses. It is not yet the interactive game described above: replace the demo guesses with validated input and add replay before calling the project complete. Keep ANSI styling optional and ensure plain text still communicates the result.</p>\n\n<h3>System Architecture of Terminal Wordle</h3>\n<p>Wordle is a world-famous word deduction game: the player has 6 attempts to guess a 5-letter hidden word. For each guess, the terminal provides color-coded feedback for every character:</p>\n<ul>\n  <li><strong style=\"color: #50fa7b;\">Green (Correct):</strong> The letter is in the secret word and at the exact position.</li>\n  <li><strong style=\"color: #f1fa8c;\">Yellow (Present):</strong> The letter is in the secret word, but in a different position.</li>\n  <li><strong style=\"color: #6272a4;\">Grey / Red (Absent):</strong> The letter is not in the secret word (or has already been accounted for).</li>\n</ul>\n\n<h3>The 2-Pass Duplicate Letter Algorithm</h3>\n<p>A classic bug in naive Wordle clones occurs with duplicate letters. For example, if the secret word is <code>APPLE</code> and the player guesses <code>PUPPY</code>, how many <code>P</code>s should turn yellow? <code>APPLE</code> only has <strong>two</strong> P's! A single-pass loop might highlight all three P's.</p>\n<p>The standard solution is a <strong>two-pass algorithm</strong>:</p>\n<ol>\n  <li><strong>Frequency Map:</strong> Count letter frequencies in the secret word.</li>\n  <li><strong>Pass 1 (Greens):</strong> Identify exact matches (<code>guess[i] == secret[i]</code>). Mark these positions as Green, and decrement the letter's available count.</li>\n  <li><strong>Pass 2 (Yellows &amp; Greys):</strong> For positions not yet marked Green: if the letter exists in the pool with available count &gt; 0, mark it Yellow and decrement; otherwise mark it Grey/Absent.</li>\n</ol>\n\n<h3>Live Keyboard Letter Matrix</h3>\n<p>To provide great UX, our implementation displays a live keyboard tracker showing which letters from A to Z are known-good, misplaced, or eliminated, so the player never re-enters dead letters!</p>",
     starterCode: "// 24_capstone_terminal_wordle.cpp\n#include <iostream>\n#include <string>\n#include <vector>\n#include <map>\n#include <cctype>\n#include <algorithm>\n\nnamespace WordleUI {\n    const std::string RESET     = \"\\033[0m\";\n    const std::string BOLD      = \"\\033[1m\";\n    const std::string GREEN_BG  = \"\\033[48;2;40;180;90;38;2;255;255;255;1m\";\n    const std::string YELLOW_BG = \"\\033[48;2;220;180;30;38;2;10;10;10;1m\";\n    const std::string GREY_BG   = \"\\033[48;2;60;65;75;38;2;220;220;220m\";\n\n    std::string toUpper(std::string s) {\n        for (char& c : s) c = std::toupper(static_cast<unsigned char>(c));\n        return s;\n    }\n}\n\nenum LetterState { UNUSED, ABSENT, PRESENT, CORRECT };\n\nvoid printKeyboard(const std::map<char, LetterState>& kb) {\n    std::cout << \"\\nRemaining Letters: \";\n    for (char c = 'A'; c <= 'Z'; ++c) {\n        auto it = kb.find(c);\n        LetterState state = (it != kb.end()) ? it->second : UNUSED;\n        if (state == CORRECT)       std::cout << \"\\033[38;2;40;220;120;1m\" << c << \" \" << WordleUI::RESET;\n        else if (state == PRESENT)  std::cout << \"\\033[38;2;240;200;60;1m\" << c << \" \" << WordleUI::RESET;\n        else if (state == ABSENT)   std::cout << \"\\033[38;2;90;90;100m\"    << c << \" \" << WordleUI::RESET;\n        else                        std::cout << \"\\033[38;2;200;210;225m\"  << c << \" \" << WordleUI::RESET;\n    }\n    std::cout << \"\\n\" << std::endl;\n}\n\nint main() {\n    const std::string secretWord = \"CRANE\";\n    const int maxAttempts = 6;\n    int attempts = 0;\n    bool won = false;\n    std::map<char, LetterState> keyboard;\n\n    std::cout << WordleUI::BOLD << \"\\033[38;2;100;220;255m\"\n              << \"========================================\\n\"\n              << \"          C++ TERMINAL WORDLE           \\n\"\n              << \"========================================\\n\" << WordleUI::RESET;\n    std::cout << \"Guess the 5-letter secret word in 6 tries!\\n\";\n\n    std::vector<std::string> demoGuesses = {\"PLANT\", \"DRAKE\", \"CRANE\"};\n\n    for (const auto& rawGuess : demoGuesses) {\n        if (won || attempts >= maxAttempts) break;\n        std::string guess = WordleUI::toUpper(rawGuess);\n        if (guess.length() != 5) continue;\n\n        attempts++;\n        std::vector<int> feedback(5, 0);\n        std::map<char, int> secretFreq;\n        for (char c : secretWord) secretFreq[c]++;\n\n        // Pass 1: Greens\n        for (int i = 0; i < 5; ++i) {\n            if (guess[i] == secretWord[i]) {\n                feedback[i] = 2;\n                secretFreq[guess[i]]--;\n                keyboard[guess[i]] = CORRECT;\n            }\n        }\n        // Pass 2: Yellows\n        for (int i = 0; i < 5; ++i) {\n            if (feedback[i] == 2) continue;\n            if (secretFreq[guess[i]] > 0) {\n                feedback[i] = 1;\n                secretFreq[guess[i]]--;\n                if (keyboard[guess[i]] != CORRECT) keyboard[guess[i]] = PRESENT;\n            } else {\n                if (keyboard[guess[i]] == UNUSED) keyboard[guess[i]] = ABSENT;\n            }\n        }\n\n        std::cout << \"Attempt \" << attempts << \"/\" << maxAttempts << \": \";\n        for (int i = 0; i < 5; ++i) {\n            if      (feedback[i] == 2) std::cout << WordleUI::GREEN_BG  << \" \" << guess[i] << \" \" << WordleUI::RESET << \" \";\n            else if (feedback[i] == 1) std::cout << WordleUI::YELLOW_BG << \" \" << guess[i] << \" \" << WordleUI::RESET << \" \";\n            else                       std::cout << WordleUI::GREY_BG   << \" \" << guess[i] << \" \" << WordleUI::RESET << \" \";\n        }\n        std::cout << std::endl;\n\n        if (guess == secretWord) { won = true; break; }\n    }\n\n    printKeyboard(keyboard);\n\n    if (won) std::cout << \"\\033[38;2;255;215;0;1mCORRECT! Solved in \" << attempts << \" attempts!\\033[0m\\n\";\n    else     std::cout << \"Game Over. The secret word was: \" << secretWord << \"\\n\";\n\n    return 0;\n}",
     explanation: "This complete capstone demonstrates the 2-pass matching algorithm, ANSI color blocks, and live keyboard tracking.",
     quiz: {
@@ -906,7 +909,7 @@ const LESSONS_DATA = [
     title: "25. 2D Vectors, Dynamic Grids & Data Normalization",
     summary: "Master multi-dimensional dynamic matrices (std::vector<std::vector<int>>) and linear data normalization (lerp) from arbitrary raw scales to color spaces.",
     cBridge: "In C, 2D dynamic arrays required an array of pointers (int**) with nested loops of malloc() and free(). In C++, a single line std::vector<std::vector<int>> grid(rows, std::vector<int>(cols)) creates a memory-safe, contiguous 2D grid with bounds-checking via .at(r).at(c).",
-    content: "<h3>Allocating 2D Grids with Vectors</h3>\n<p>A 2D vector in C++ is a vector of vectors: <code>std::vector&lt;std::vector&lt;T&gt;&gt;</code>. You can dynamically instantiate a grid with <code>R</code> rows and <code>C</code> columns initialized to a default value in a single statement:</p>\n\n<pre><code>int rows = 10, cols = 20;\nstd::vector&lt;std::vector&lt;int&gt;&gt; grid(rows, std::vector&lt;int&gt;(cols, 0));\n\ngrid[2][5] = 42; // Access row 2, column 5</code></pre>\n\n<h3>Finding Bounds: Min, Max &amp; Range</h3>\n<p>When working with real elevation matrices, temperatures, or population datasets, raw values range from negative depths (e.g. -86 meters in Death Valley) to massive heights (e.g. 8,848 meters on Mount Everest). To render these visually, you must find the minimum and maximum values:</p>\n\n<pre><code>int minVal = grid[0][0];\nint maxVal = grid[0][0];\n\nfor (const auto&amp; row : grid) {\n    for (int cell : row) {\n        if (cell &lt; minVal) minVal = cell;\n        if (cell &gt; maxVal) maxVal = cell;\n    }\n}\nint range = maxVal - minVal;\nif (range == 0) range = 1; // Prevent division by zero!</code></pre>\n\n<h3>Linear Normalization (Lerping to 0–255)</h3>\n<p>To map any arbitrary elevation value into an 8-bit color index (<code>0</code> to <code>255</code>), use linear scaling:</p>\n\n<pre><code>int colorIndex = (cell - minVal) * 255 / range;</code></pre>\n<p>This guarantees that the lowest elevation maps to <code>0</code>, the highest peak maps to <code>255</code>, and all intermediate terrain scales smoothly.</p>",
+    content: "<h3>Input and Data Boundaries</h3>\n<p>Use formatted numeric input with explicit prompts. Check that dimensions are positive and reasonably bounded before allocating the nested vector; reject malformed cells with a clear message. Keep loading separate from normalization and rendering.</p>\n\n<h3>Allocating 2D Grids with Vectors</h3>\n<p>A 2D vector in C++ is a vector of vectors: <code>std::vector&lt;std::vector&lt;T&gt;&gt;</code>. You can dynamically instantiate a grid with <code>R</code> rows and <code>C</code> columns initialized to a default value in a single statement:</p>\n\n<pre><code>int rows = 10, cols = 20;\nstd::vector&lt;std::vector&lt;int&gt;&gt; grid(rows, std::vector&lt;int&gt;(cols, 0));\n\ngrid[2][5] = 42; // Access row 2, column 5</code></pre>\n\n<h3>Finding Bounds: Min, Max &amp; Range</h3>\n<p>When working with real elevation matrices, temperatures, or population datasets, raw values range from negative depths (e.g. -86 meters in Death Valley) to massive heights (e.g. 8,848 meters on Mount Everest). To render these visually, you must find the minimum and maximum values:</p>\n\n<pre><code>int minVal = grid[0][0];\nint maxVal = grid[0][0];\n\nfor (const auto&amp; row : grid) {\n    for (int cell : row) {\n        if (cell &lt; minVal) minVal = cell;\n        if (cell &gt; maxVal) maxVal = cell;\n    }\n}\nint range = maxVal - minVal;\nif (range == 0) range = 1; // Prevent division by zero!</code></pre>\n\n<h3>Linear Normalization (Lerping to 0–255)</h3>\n<p>To map any arbitrary elevation value into an 8-bit color index (<code>0</code> to <code>255</code>), use linear scaling:</p>\n\n<pre><code>int colorIndex = (cell - minVal) * 255 / range;</code></pre>\n<p>This guarantees that the lowest elevation maps to <code>0</code>, the highest peak maps to <code>255</code>, and all intermediate terrain scales smoothly.</p>",
     starterCode: "// 25_2d_vectors_and_normalization.cpp\n#include <iostream>\n#include <vector>\n#include <iomanip>\n\nint main() {\n    std::vector<std::vector<int>> elevation = {\n        {1200, 1450, 1800, 1950, 1600},\n        {1350, 2100, 2850, 2400, 1750},\n        {1100, 1950, 3100, 2700, 1500},\n        { 950, 1200, 1600, 1400, 1050}\n    };\n\n    int rows = elevation.size();\n    int cols = elevation[0].size();\n\n    int minVal = elevation[0][0];\n    int maxVal = elevation[0][0];\n\n    for (int r = 0; r < rows; ++r)\n        for (int c = 0; c < cols; ++c) {\n            if (elevation[r][c] < minVal) minVal = elevation[r][c];\n            if (elevation[r][c] > maxVal) maxVal = elevation[r][c];\n        }\n\n    int range = maxVal - minVal;\n    if (range == 0) range = 1;\n\n    std::cout << \"Terrain: \" << rows << \" rows x \" << cols << \" cols\" << std::endl;\n    std::cout << \"Min: \" << minVal << \" m   Max: \" << maxVal << \" m   Range: \" << range << \" m\\n\\n\";\n    std::cout << \"Normalized Intensity Matrix (0-255):\" << std::endl;\n\n    for (int r = 0; r < rows; ++r) {\n        for (int c = 0; c < cols; ++c) {\n            int norm = (elevation[r][c] - minVal) * 255 / range;\n            std::cout << std::setw(4) << norm << \" \";\n        }\n        std::cout << std::endl;\n    }\n\n    return 0;\n}",
     explanation: "2D vectors represent matrices cleanly, and linear normalization maps arbitrary data into visual color space.",
     quiz: {
@@ -944,7 +947,7 @@ const LESSONS_DATA = [
     title: "26. Capstone 2: 2D Elevation Heat Map Renderer",
     summary: "Build a high-density 2D terrain visualizer using procedural color transfer gradients, sea-level clipping, and ANSI TrueColor background blocks.",
     cBridge: "In this capstone, 2D dynamic matrices meet ANSI escape sequences: by outputting double-space characters with 24-bit background colors, standard console text transforms into a high-density raster display.",
-    content: "<h3>Raster Graphics Inside a Text Terminal</h3>\n<p>How did our friend Luis render full-color topographical maps in the command line? The secret is surprisingly simple: <strong>double-space background color blocks</strong>.</p>\n<p>Because terminal characters are roughly twice as tall as they are wide, printing two space characters with a colored background <code>\\x1b[48;2;R;G;Bm  \\x1b[0m</code> produces an almost perfectly square pixel!</p>\n\n<h3>Designing Procedural Color Ramps</h3>\n<p>To turn normalized elevation values (<code>0 &ndash; 255</code>) into colorful terrain, we pass the normalized value into a <strong>color transfer function</strong>:</p>\n<ul>\n  <li><strong>Thermal Red-to-Green:</strong>\n    <br>&bull; Low values: Pure Red <code>(255, 2*val, 0)</code>\n    <br>&bull; High values: Pure Green <code>(2*(255-val), 255, 0)</code>\n  </li>\n  <li><strong>Spectral Rainbow Gradient:</strong>\n    <br>Multiplies the 0&ndash;255 index across 5 color segments: Navy &rarr; Cyan &rarr; Green &rarr; Yellow &rarr; Fiery Red.\n  </li>\n</ul>\n\n<h3>Sea-Level Masking &amp; Real Geographic Data</h3>\n<p>In real elevation models, values below 0 meters represent oceans and water bodies. Our implementation supports a <strong>sea level baseline toggle</strong>, automatically rendering water depths in oceanic dark blue/black while applying the terrain gradient strictly to dry land.</p>",
+    content: "<h3>Input and Data Boundaries</h3>\n<p>The source project bundles a very large map through a preprocessor include and uses terse numeric menus. That couples data distribution to compilation and makes choices hard to understand. This capstone uses a small self-contained sample: show a labeled default map first, then offer optional settings with named choices, validate each answer, and include a legend. For manual grids, verify dimensions and every value before rendering.</p>\n\n<h3>Raster Graphics Inside a Text Terminal</h3>\n<p>How did our friend Luis render full-color topographical maps in the command line? The secret is surprisingly simple: <strong>double-space background color blocks</strong>.</p>\n<p>Because terminal characters are roughly twice as tall as they are wide, printing two space characters with a colored background <code>\\x1b[48;2;R;G;Bm  \\x1b[0m</code> produces an almost perfectly square pixel!</p>\n\n<h3>Designing Procedural Color Ramps</h3>\n<p>To turn normalized elevation values (<code>0 &ndash; 255</code>) into colorful terrain, we pass the normalized value into a <strong>color transfer function</strong>:</p>\n<ul>\n  <li><strong>Thermal Red-to-Green:</strong>\n    <br>&bull; Low values: Pure Red <code>(255, 2*val, 0)</code>\n    <br>&bull; High values: Pure Green <code>(2*(255-val), 255, 0)</code>\n  </li>\n  <li><strong>Spectral Rainbow Gradient:</strong>\n    <br>Multiplies the 0&ndash;255 index across 5 color segments: Navy &rarr; Cyan &rarr; Green &rarr; Yellow &rarr; Fiery Red.\n  </li>\n</ul>\n\n<h3>Sea-Level Masking &amp; Real Geographic Data</h3>\n<p>In real elevation models, values below 0 meters represent oceans and water bodies. Our implementation supports a <strong>sea level baseline toggle</strong>, automatically rendering water depths in oceanic dark blue/black while applying the terrain gradient strictly to dry land.</p>",
     starterCode: "// 26_capstone_elevation_heatmap.cpp\n#include <iostream>\n#include <vector>\n#include <cmath>\n#include <algorithm>\n\nvoid printRainbowPixel(int val) {\n    if (val < 0) { std::cout << \"\\033[48;2;10;15;35m  \\033[0m\"; return; }\n    int scaled = val * 5;\n    int r = 0, g = 0, b = 0;\n    if      (scaled <= 255)   { r = 255;           g = scaled;        b = 0;             }\n    else if (scaled <= 510)   { r = 510 - scaled;  g = 255;           b = 0;             }\n    else if (scaled <= 765)   { r = 0;             g = 255;           b = scaled - 510;  }\n    else if (scaled <= 1020)  { r = 0;             g = 1020 - scaled; b = 255;           }\n    else                      { r = scaled - 1020; g = 0;             b = 255;           }\n    std::cout << \"\\033[48;2;\" << r << \";\" << g << \";\" << b << \"m  \\033[0m\";\n}\n\nvoid renderMap(const std::vector<std::vector<int>>& grid, bool useSeaLevel = true) {\n    if (grid.empty() || grid[0].empty()) return;\n    int rows = grid.size(), cols = grid[0].size();\n    int minVal = grid[0][0], maxVal = grid[0][0];\n    for (const auto& row : grid)\n        for (int cell : row) {\n            if (cell < minVal) minVal = cell;\n            if (cell > maxVal) maxVal = cell;\n        }\n    int baseline = useSeaLevel ? std::max(0, minVal) : minVal;\n    int range = std::max(1, maxVal - baseline);\n    std::cout << \"\\nTopography (\" << cols << \"x\" << rows << \") Peak:\" << maxVal << \"m Min:\" << minVal << \"m\\n\";\n    for (int r = 0; r < rows; ++r) {\n        for (int c = 0; c < cols; ++c) {\n            int cell = grid[r][c];\n            if (useSeaLevel && cell <= 0) { printRainbowPixel(-1); continue; }\n            int norm = std::clamp((cell - baseline) * 255 / range, 0, 255);\n            printRainbowPixel(norm);\n        }\n        std::cout << \"\\n\";\n    }\n}\n\nint main() {\n    std::cout << \"=== 2D ELEVATION HEAT MAP RENDERER ===\\n\";\n    const int R = 12, C = 20;\n    std::vector<std::vector<int>> island(R, std::vector<int>(C, 0));\n    double cR = R / 2.0, cC = C / 2.0;\n    for (int r = 0; r < R; ++r)\n        for (int c = 0; c < C; ++c) {\n            double dist = std::sqrt((r-cR)*(r-cR) + (c-cC)*(c-cC));\n            island[r][c] = static_cast<int>(3500.0 - dist * 550.0);\n        }\n    renderMap(island, true);\n    std::cout << \"\\nLegend: Dark = Ocean, Warm = Lowlands, Violet = Summit\\n\";\n    return 0;\n}",
     explanation: "Double-space colored blocks act as square terminal pixels, transforming 2D vectors into raster topography.",
     quiz: {
@@ -1018,9 +1021,15 @@ const LESSONS_DATA = [
     category: "Luis's Capstone Projects",
     fileSlug: "28_capstone_boolean_evaluator",
     title: "28. Capstone 3: Boolean Algebra Evaluator & Truth Tables",
-    summary: "Construct an algebraic expression evaluator with recursive parenthesis parsing, operator precedence, and automated equivalence verification.",
+    summary: "Build a validated Boolean expression evaluator, generate truth tables, and compare two expressions across every input row.",
     cBridge: "This capstone implements expression parsing—a fundamental compiler concept. We evaluate boolean formulas without external libraries using recursive substring evaluation and operator reduction.",
-    content: "<h3>The Boolean Operator Hierarchy</h3>\n<p>To evaluate complex formulas like <code>A(B + C') ^ (A &amp; !B)</code>, we must respect the standard Boolean operator precedence order:</p>\n<ol>\n  <li><strong>Parentheses <code>()</code>:</strong> Evaluated first from inside out.</li>\n  <li><strong>NOT:</strong> Postfix apostrophe <code>A'</code> or prefix exclamation <code>!A</code>.</li>\n  <li><strong>AND:</strong> Explicit <code>*</code>, <code>.</code>, <code>&amp;</code>, and implicit variable adjacency (<code>AB</code>).</li>\n  <li><strong>XOR:</strong> Caret <code>^</code> (different = 1, same = 0).</li>\n  <li><strong>OR:</strong> Plus <code>+</code> and pipe <code>|</code>.</li>\n</ol>\n\n<h3>Recursive Parenthesis Evaluation</h3>\n<p>Our algorithm searches for the innermost closing parenthesis <code>)</code>, finds its matching opening parenthesis <code>(</code>, extracts the inner sub-expression, recursively evaluates it to a single <code>'0'</code> or <code>'1'</code>, and substitutes the result back into the string:</p>\n\n<pre><code>// Example string reduction:\n// \"A(B + C)\" -&gt; evaluate \"B + C\" -&gt; \"A(1)\" -&gt; \"A1\" -&gt; '1'</code></pre>\n\n<h3>Automated Equivalence Verification</h3>\n<p>Want to prove whether two boolean expressions are mathematically identical (e.g. De Morgan's Law: <code>(A + B)' = A'B'</code>)?</p>\n<p>Our program tests both expressions against all 2<sup>N</sup> minterm input combinations. If the output of <code>F1</code> matches <code>F2</code> for every single row, the functions are proven mathematically equivalent!</p>",
+    content: ""<h3>Build a Parser You Can Explain and Validate</h3>\n<p>Begin with a documented grammar and a short input loop. A practical first milestone accepts variables, parentheses, prefix <code>!</code>, AND (<code>&amp;</code>), and OR (<code>+</code>); add implicit AND, apostrophe NOT, XOR, and equivalence only after tests cover them. Read an entire expression with <code>std::getline</code>, treat a blank line as an error, and give <code>--i</code> or <code>quit</code> an explicit meaning. Keep parsing separate from truth-table generation and printing.</p>\n<p>For recursive descent, give each precedence level its own function, such as <code>parseOr</code>, <code>parseAnd</code>, <code>parseUnary</code>, and <code>parsePrimary</code>. A parenthesized primary parses its inner expression and requires a closing <code>)</code>. This makes precedence visible in the code and lets errors identify an unexpected token or missing parenthesis. Cap the number of variables before computing <code>2^N</code>, since truth tables grow exponentially.</p>\n<p>The original program recursively reduces substrings from the end and uses shared global operator flags. Its info text even describes a backwards association for repeated XOR; it has no robust malformed-input path. Treat that code as a feature reference, not a parser to copy. A correct evaluator should be deterministic, have stated syntax, and fail with a useful message instead of indexing outside a string.</p>\n\n<h3>The Boolean Operator Hierarchy</h3>\n<p>To evaluate complex formulas like <code>A(B + C') ^ (A &amp; !B)</code>, we must respect the standard Boolean operator precedence order:</p>\n<ol>\n  <li><strong>Parentheses <code>()</code>:</strong> Evaluated first from inside out.</li>\n  <li><strong>NOT:</strong> Postfix apostrophe <code>A'</code> or prefix exclamation <code>!A</code>.</li>\n  <li><strong>AND:</strong> Explicit <code>*</code>, <code>.</code>, <code>&amp;</code>, and implicit variable adjacency (<code>AB</code>).</li>\n  <li><strong>XOR:</strong> Caret <code>^</code> (different = 1, same = 0).</li>\n  <li><strong>OR:</strong> Plus <code>+</code> and pipe <code>|</code>.</li>\n</ol>\n\n<h3>Recursive Parenthesis Evaluation</h3>\n<p>Parentheses naturally divide an expression into smaller expressions. A recursive evaluator can locate a matched pair, evaluate the inner expression, and replace that group with <code>'0'</code> or <code>'1'</code>. Each recursive call must receive a smaller, well-formed expression; malformed input needs an explicit error rather than an assumed result:</p>
+
+<pre><code>// Example reduction:
+// &quot;A(B + C)&quot; -&gt; evaluate &quot;B + C&quot; -&gt; replace the group with its result</code></pre>
+<p>Recursion is one possible implementation, not a requirement for a good user experience. The original project uses backward substring reduction with global operator flags and does not validate unmatched parentheses, missing operands, or unsafe positions such as NOT at the start. These assumptions can produce wrong results or invalid string access. A stronger design keeps parser state local, checks each token and matched parenthesis, reports invalid input clearly, and separates reading, parsing, evaluation, and output. Teach a deliberately limited grammar and say what it supports.</p>
+
+<h3>Automated Equivalence Verification</h3>\n<p>Want to prove whether two boolean expressions are mathematically identical (e.g. De Morgan's Law: <code>(A + B)' = A'B'</code>)?</p>\n<p>Our program tests both expressions against all 2<sup>N</sup> minterm input combinations. If the output of <code>F1</code> matches <code>F2</code> for every single row, the functions are proven mathematically equivalent!</p>",
     starterCode: "// 28_capstone_boolean_evaluator.cpp\n#include <iostream>\n#include <string>\n#include <set>\n#include <map>\n#include <algorithm>\n\nnamespace BooleanLogic {\n    char evalFlat(std::string s) {\n        for (size_t i = 0; i < s.length(); ++i) {\n            if (s[i] == '\\'' && i > 0) { s[i-1] = (s[i-1]=='1')?'0':'1'; s.erase(i,1); --i; }\n            else if (s[i]=='!' && i+1<s.length()) { s[i+1]=(s[i+1]=='1')?'0':'1'; s.erase(i,1); --i; }\n        }\n        for (int i=(int)s.length()-1; i>0; --i)\n            if (s[i]=='*'||s[i]=='&'||s[i]=='.') {\n                s[i-1]=(s[i-1]=='1'&&s[i+1]=='1')?'1':'0'; s.erase(i,2);\n            } else if ((s[i]=='1'||s[i]=='0')&&(s[i-1]=='1'||s[i-1]=='0')) {\n                s[i-1]=(s[i-1]=='1'&&s[i]=='1')?'1':'0'; s.erase(i,1);\n            }\n        for (int i=(int)s.length()-1; i>0; --i)\n            if (s[i]=='^') { s[i-1]=(s[i-1]!=s[i+1])?'1':'0'; s.erase(i,2); }\n        for (int i=(int)s.length()-1; i>0; --i)\n            if (s[i]=='+'||s[i]=='|') { s[i-1]=(s[i-1]=='1'||s[i+1]=='1')?'1':'0'; s.erase(i,2); }\n        return s.empty()?'0':s[0];\n    }\n\n    char eval(std::string s) {\n        while (s.find('(')!=std::string::npos) {\n            size_t cp=s.find(')'), op=s.rfind('(',cp);\n            std::string sub=s.substr(op+1,cp-op-1);\n            char r=eval(sub); s.replace(op,cp-op+1,1,r);\n        }\n        return evalFlat(s);\n    }\n\n    std::string substitute(std::string expr, const std::string& bin, const std::map<char,int>& vm) {\n        for (size_t i=0; i<expr.length(); ++i)\n            if (std::isalpha(expr[i])) expr[i]=bin[vm.at(expr[i])];\n        return expr;\n    }\n}\n\nint main() {\n    std::cout << \"=== BOOLEAN ALGEBRA EQUIVALENCE PROVER ===\\n\\n\";\n    std::string f1=\"A(B+C)\", f2=\"AB+AC\";\n    std::cout << \"F1: \" << f1 << \"\\nF2: \" << f2 << \"\\n\\n\";\n\n    std::map<char,int> vm={{'A',0},{'B',1},{'C',2}};\n    int total = 1 << 3;\n    bool equiv = true;\n\n    std::cout << \" A B C | F1 | F2 | OK?\\n\";\n    std::cout << \"-------+----+----+----\\n\";\n\n    for (int i=0; i<total; ++i) {\n        std::string bin=\"\";\n        for (int j=2;j>=0;--j) bin+=((i>>j)&1)?'1':'0';\n        char o1=BooleanLogic::eval(BooleanLogic::substitute(f1,bin,vm));\n        char o2=BooleanLogic::eval(BooleanLogic::substitute(f2,bin,vm));\n        if (o1!=o2) equiv=false;\n        std::cout << \" \" << bin[0] << \" \" << bin[1] << \" \" << bin[2]\n                  << \" |  \" << o1 << \" |  \" << o2 << \" |  \" << (o1==o2?\"YES\":\"NO\") << \"\\n\";\n    }\n    std::cout << \"\\nResult: \" << (equiv?\"EQUIVALENT (Distributive Law)\":\"NOT EQUIVALENT\") << \"\\n\";\n    return 0;\n}",
     explanation: "Recursive parenthesis extraction reduces expressions to flat binary evaluations and proves algebraic equivalence across all minterms.",
     quiz: {
@@ -1094,9 +1103,9 @@ const LESSONS_DATA = [
     category: "Luis's Capstone Projects",
     fileSlug: "30_capstone_kmap_visualizer",
     title: "30. Capstone 4: Interactive Karnaugh Map (K-Map) Visualizer",
-    summary: "Build the ultimate Boolean algebra terminal workbench: render 2D ANSI visual K-maps, verify identities, and detect adjacency groups.",
+    summary: "Extend a validated Boolean evaluator into a terminal K-map visualizer using Gray-code cell ordering.",
     cBridge: "This final capstone synthesizes everything learned across the entire course: STL sets, maps, vectors, bit manipulation, recursive parsing, Gray-code indexing, and ANSI 24-bit TrueColor console rendering into an impressive, professional engineering tool.",
-    content: "<h3>The Crowning Capstone: The K-Map Visualizer</h3>\n<p>You have reached the ultimate capstone of the curriculum! We now synthesize all the concepts mastered across earlier lessons into a unified digital logic workstation:</p>\n<ul>\n  <li><strong>Expression Parsing:</strong> Recursively reduces formulas with parentheses, NOT, AND, XOR, and OR.</li>\n  <li><strong>Truth Table Generation:</strong> Automatically discovers all input variables and tabulates all 2<sup>N</sup> combinations.</li>\n  <li><strong>ANSI Visual 2D K-Map Grid:</strong> Renders high-contrast colored blocks for <code>1</code> (white active cell), <code>0</code> (dark background), and <code>?</code> (don't care condition).</li>\n  <li><strong>Complement Headers:</strong> Renders visual boundary lines showing which rows/columns correspond to uncomplemented vs complemented variable regions.</li>\n</ul>\n\n<h3>Karnaugh Map Cell Visual Styling</h3>\n<p>In our console renderer, every cell in the K-map is drawn with high-visibility TrueColor background styling:</p>\n<ul>\n  <li><code>1 (True):</code> <code>\\x1b[48;2;240;248;255;38;2;10;10;10;1m  1  \\x1b[0m</code> &mdash; Vibrant illuminated cell.</li>\n  <li><code>0 (False):</code> <code>\\x1b[48;2;25;30;40;38;2;140;150;165m  0  \\x1b[0m</code> &mdash; Dark contrast cell.</li>\n</ul>\n<p>Adjacent groups of 1s in sizes of powers of two (2, 4, 8, 16) represent simplified product terms in digital logic minimization.</p>",
+    content: "<h3>Turn the Truth Table into a K-Map</h3>\n<p>Use the evaluator from Lesson 28 to produce a complete truth string, then map each minterm to its Gray-code row and column using the index table from Lesson 29. Validate the variable count and require exactly <code>2^N</code> truth values before drawing. Keep the renderer independent from evaluation so plain text output can be used when ANSI colors are unavailable.</p>\n<p>Build in stages: first render a 2-variable map without color, then add Gray-code ordering, then 3- and 4-variable layouts, and finally optional ANSI cell styling and identity comparison. The current starter code is a fixed 4-variable demonstration; it does not parse expressions, accept a bitstream, or verify the claimed simplification. Those are extension tasks, not features already implemented.</p>\n\n<h3>The Crowning Capstone: The K-Map Visualizer</h3>\n<p>You have reached the ultimate capstone of the curriculum! We now synthesize all the concepts mastered across earlier lessons into a unified digital logic workstation:</p>\n<ul>\n  <li><strong>Expression Parsing:</strong> Recursively reduces formulas with parentheses, NOT, AND, XOR, and OR.</li>\n  <li><strong>Truth Table Generation:</strong> Automatically discovers all input variables and tabulates all 2<sup>N</sup> combinations.</li>\n  <li><strong>ANSI Visual 2D K-Map Grid:</strong> Renders high-contrast colored blocks for <code>1</code> (white active cell), <code>0</code> (dark background), and <code>?</code> (don't care condition).</li>\n  <li><strong>Complement Headers:</strong> Renders visual boundary lines showing which rows/columns correspond to uncomplemented vs complemented variable regions.</li>\n</ul>\n\n<h3>Karnaugh Map Cell Visual Styling</h3>\n<p>In our console renderer, every cell in the K-map is drawn with high-visibility TrueColor background styling:</p>\n<ul>\n  <li><code>1 (True):</code> <code>\\x1b[48;2;240;248;255;38;2;10;10;10;1m  1  \\x1b[0m</code> &mdash; Vibrant illuminated cell.</li>\n  <li><code>0 (False):</code> <code>\\x1b[48;2;25;30;40;38;2;140;150;165m  0  \\x1b[0m</code> &mdash; Dark contrast cell.</li>\n</ul>\n<p>Adjacent groups of 1s in sizes of powers of two (2, 4, 8, 16) represent simplified product terms in digital logic minimization.</p>",
     starterCode: "// 30_capstone_kmap_visualizer.cpp\n#include <iostream>\n#include <vector>\n#include <string>\n\nstd::string kCell(char val) {\n    if (val == '1') return \"\\033[48;2;240;248;255;38;2;10;10;10;1m  1  \\033[0m\";\n    if (val == '0') return \"\\033[48;2;25;30;40;38;2;140;150;165m  0  \\033[0m\";\n    return \"\\033[48;2;80;85;95;38;2;240;240;240m  ?  \\033[0m\";\n}\n\nvoid printKMap4(const std::string& truth, const std::vector<char>& v) {\n    int map[4][4] = {{0,1,3,2},{4,5,7,6},{12,13,15,14},{8,9,11,10}};\n    std::string rl[] = {\"00\",\"01\",\"11\",\"10\"};\n\n    std::cout << \"\\n\\033[38;2;100;220;255;1mK-Map (\" << v[0] << v[1]\n              << \" \\\\ \" << v[2] << v[3] << \")\\033[0m\\n\\n\";\n    std::cout << \"       \" << v[2] << v[3] << \": 00    01    11    10\\n\";\n    std::cout << \"   \" << v[0] << v[1] << \" +--------------------------\\n\";\n\n    for (int r = 0; r < 4; ++r) {\n        std::cout << \"    \" << rl[r] << \" | \";\n        for (int c = 0; c < 4; ++c) {\n            int idx = map[r][c];\n            char bit = (idx < (int)truth.size()) ? truth[idx] : '0';\n            std::cout << kCell(bit) << \" \";\n        }\n        std::cout << \"\\n\";\n    }\n    std::cout << std::endl;\n}\n\nint main() {\n    std::cout << \"\\033[38;2;100;220;255;1m\"\n              << \"=== KARNAUGH MAP (K-MAP) VISUALIZER ===\\n\\033[0m\";\n\n    // F = D (all odd minterms are 1)\n    std::string truth = \"0101010101010101\";\n    std::vector<char> vars = {'A','B','C','D'};\n\n    std::cout << \"Bitstream: \" << truth << \"\\n\";\n    std::cout << \"Active minterms: m1,m3,m5,m7,m9,m11,m13,m15\\n\";\n\n    printKMap4(truth, vars);\n\n    std::cout << \"\\033[38;2;255;215;0;1mSimplification: F = D\\033[0m\\n\";\n    std::cout << \"(Column 01 and 11 form an 8-cell octet - A, B, C cancel)\\n\";\n    return 0;\n}",
     explanation: "This complete capstone brings together 2D Gray code indexing, ANSI TrueColor block rendering, and logic minimization.",
     quiz: {
@@ -1123,6 +1132,465 @@ const LESSONS_DATA = [
                 "id": 2,
                 "answer": "16",
                 "hint": "2 to the 4th power"
+        }
+]
+    }
+  },
+
+  // ─── NEW LESSONS ─────────────────────────────────────────────────────────────
+
+  {
+    id: "31-constants-and-type-casting",
+    category: "Foundations Extended",
+    fileSlug: "31_constants_and_casting",
+    title: "31. Constants & Type Casting",
+    summary: "Use const to lock values, and cast between numeric types cleanly with static_cast.",
+    cBridge: "In C you used #define PI 3.14159 for constants — a raw text substitution with no type safety. In C++, const int MAX = 100; gives a typed, scoped constant that the compiler can reason about. static_cast<double>(x) replaces the old C-style (double)x cast.",
+    content: "\n<h3>The <code>const</code> Keyword</h3>\n<p>Marking a variable <code>const</code> prevents it from ever being reassigned. Attempting to modify it is a compile-time error. By convention, constant names use <code>UPPER_SNAKE_CASE</code>.</p>\n\n<pre><code>const double PI = 3.14159265;\nconst int SCREEN_WIDTH = 1920;\n// PI = 3.0; // ❌ Compile error</code></pre>\n\n<h3>Type Casting with <code>static_cast</code></h3>\n<p>C++ provides named cast operators that are explicit and searchable. <code>static_cast&lt;T&gt;(expr)</code> is the standard way to convert between compatible numeric types:</p>\n\n<pre><code>int votes = 7;\nint total = 10;\n// Integer division — loses the decimal:\ndouble ratio = votes / total;       // 0.0\n// Correct — cast one operand first:\ndouble ratio2 = static_cast&lt;double&gt;(votes) / total; // 0.7</code></pre>\n\n<h3>Narrowing Conversions</h3>\n<p>Casting from a larger type to a smaller one (e.g. <code>double</code> to <code>int</code>) truncates toward zero — it does not round. Always be deliberate:</p>\n<pre><code>double price = 9.99;\nint wholePrice = static_cast&lt;int&gt;(price); // 9, not 10</code></pre>",
+    starterCode: "// 31_constants_and_casting.cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    const double PI = 3.14159265;\n    const int BIRTH_YEAR = 1990;\n\n    cout << \"PI = \" << PI << endl;\n    cout << \"Birth year: \" << BIRTH_YEAR << endl;\n\n    // Casting to avoid integer division\n    int correct = 9;\n    int total = 10;\n    double pct = static_cast<double>(correct) / total * 100.0;\n    cout << \"Score: \" << pct << \"%\" << endl;\n\n    // Narrowing cast\n    double temperature = 36.8;\n    int truncated = static_cast<int>(temperature);\n    cout << \"Truncated temp: \" << truncated << endl;\n\n    return 0;\n}",
+    explanation: "static_cast is checked at compile time, making it safer than a C-style (int) cast which silently compiles even on incompatible types.",
+    quiz: {
+      "question": "What does static_cast<int>(7.9) return?",
+      "options": [
+            "8",
+            "7",
+            "8.0",
+            "Compile error"
+      ],
+      "answer": 1,
+      "explanation": "static_cast<int> truncates toward zero, so 7.9 becomes 7, not 8."
+    },
+    fillBlank: {
+      instructions: "Fill in the keyword and cast to compute a percentage without integer division:",
+      codeTemplate: "#include <iostream>\nusing namespace std;\n\nint main() {\n    ___1___ int TOTAL = 50;\n    int got = 35;\n    double pct = ___2___<double>(got) / TOTAL * 100.0;\n    cout << pct << \"%\" << endl;\n    return 0;\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "const",
+                "hint": "Keyword to declare an immutable variable"
+        },
+        {
+                "id": 2,
+                "answer": "static_cast",
+                "hint": "C++ named cast operator"
+        }
+]
+    }
+  },
+  {
+    id: "32-constants-input-program",
+    category: "Foundations Extended",
+    fileSlug: "32_bmi_calculator",
+    title: "32. Interactive BMI Calculator",
+    summary: "Build a full BMI calculator that accepts user input, uses const for medical thresholds, and branches with if-else.",
+    cBridge: "This program combines three pillars at once: stdin reading (cin), constant named thresholds (const double), and conditional output. In a C program you would use #define thresholds and scanf; in C++ the equivalent is far more readable.",
+    content: "\n<h3>Putting It Together: A Real Interactive Program</h3>\n<p>The best way to solidify constants, casting, and input is to build something useful. BMI (Body Mass Index) is calculated as:</p>\n\n<pre><code>BMI = weight_kg / (height_m * height_m)</code></pre>\n\n<p>We define the medical category thresholds as <code>const</code> values so they can never be accidentally mutated, then read real user input and classify the result.</p>\n\n<h3>The <code>cin.ignore()</code> Reminder</h3>\n<p>After reading a numeric value with <code>cin &gt;&gt; weight</code>, a newline <code>'\\n'</code> remains in the buffer. If a <code>getline()</code> call follows, it will consume that newline immediately and appear to skip input. Always call <code>cin.ignore();</code> between a <code>cin &gt;&gt;</code> and a <code>getline()</code>.</p>",
+    starterCode: "// 32_bmi_calculator.cpp\n#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    const double UNDERWEIGHT = 18.5;\n    const double NORMAL_MAX  = 24.9;\n    const double OVERWEIGHT_MAX = 29.9;\n\n    string name;\n    double weight, height;\n\n    cout << \"Enter your name: \";\n    getline(cin, name);\n\n    cout << \"Enter weight in kg: \";\n    cin >> weight;\n\n    cout << \"Enter height in metres: \";\n    cin >> height;\n\n    double bmi = weight / (height * height);\n\n    cout << \"\\nHello, \" << name << \"!\" << endl;\n    cout << \"Your BMI is: \" << bmi << endl;\n\n    if (bmi < UNDERWEIGHT) {\n        cout << \"Category: Underweight\" << endl;\n    } else if (bmi <= NORMAL_MAX) {\n        cout << \"Category: Normal weight\" << endl;\n    } else if (bmi <= OVERWEIGHT_MAX) {\n        cout << \"Category: Overweight\" << endl;\n    } else {\n        cout << \"Category: Obese\" << endl;\n    }\n\n    return 0;\n}",
+    explanation: "Try entering name=Alice, weight=65, height=1.70. The BMI comes out to ~22.5, which falls in the Normal range.",
+    quiz: {
+      "question": "Why is it safer to store the BMI threshold 18.5 as 'const double UNDERWEIGHT = 18.5' rather than writing 18.5 directly in the if-condition?",
+      "options": [
+            "Constants run faster at runtime",
+            "It gives the magic number a name, prevents accidental mutation, and makes future changes require only one edit",
+            "The compiler cannot evaluate 18.5 directly in an if-condition",
+            "const is required for floating-point comparisons"
+      ],
+      "answer": 1,
+      "explanation": "Named constants eliminate 'magic numbers', making code self-documenting and ensuring any threshold update propagates everywhere automatically."
+    },
+    fillBlank: {
+      instructions: "Complete the BMI formula and the getline call to read the user's name:",
+      codeTemplate: "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string name;\n    double w, h;\n    ___1___(cin, name);\n    cin >> w >> h;\n    double bmi = w / (h ___2___ h);\n    cout << bmi << endl;\n    return 0;\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "getline",
+                "hint": "Function to read a full line including spaces"
+        },
+        {
+                "id": 2,
+                "answer": "*",
+                "hint": "Operator to multiply height by itself"
+        }
+]
+    }
+  },
+  {
+    id: "33-string-comparison-and-methods",
+    category: "Foundations Extended",
+    fileSlug: "33_string_comparison",
+    title: "33. String Comparison & Advanced Methods",
+    summary: "Compare strings with == and .compare(), convert case, and check membership with .find().",
+    cBridge: "In C, strcmp(a, b) returned 0 for equality, negative if a < b, and positive if a > b. In C++, you can compare std::string objects directly with == and !=. The .compare() method still exists for ordering comparisons.",
+    content: "\n<h3>Direct Equality Comparison</h3>\n<p>Unlike C-strings (char arrays), <code>std::string</code> objects support direct equality comparisons with <code>==</code> and <code>!=</code>:</p>\n\n<pre><code>string password = \"s3cr3t\";\nstring attempt;\ncin >> attempt;\n\nif (attempt == password) {\n    cout << \"Access granted!\" << endl;\n} else {\n    cout << \"Wrong password.\" << endl;\n}</code></pre>\n\n<h3>Ordering with <code>.compare()</code></h3>\n<p><code>a.compare(b)</code> returns <code>0</code> if equal, a negative number if <code>a</code> comes before <code>b</code> alphabetically, or a positive number if after. This is directly equivalent to C's <code>strcmp</code>:</p>\n<pre><code>if (myString.compare(\"cat\") == 0) {\n    cout << \"Strings are equal\" << endl;\n}</code></pre>\n\n<h3>Case Conversion</h3>\n<p>The standard library provides <code>toupper(c)</code> and <code>tolower(c)</code> from <code>&lt;cctype&gt;</code>. To convert a whole string, loop over each character:</p>\n<pre><code>#include &lt;cctype&gt;\nfor (char& c : word) c = toupper(c);</code></pre>",
+    starterCode: "// 33_string_comparison.cpp\n#include <iostream>\n#include <string>\n#include <cctype>\nusing namespace std;\n\nint main() {\n    string secret = \"cpp2026\";\n    string attempt;\n\n    cout << \"Enter the password: \";\n    cin >> attempt;\n\n    if (attempt == secret) {\n        cout << \"Access granted! Welcome.\" << endl;\n    } else {\n        cout << \"Incorrect. You entered: \" << attempt << endl;\n    }\n\n    // Alphabetic ordering\n    string word;\n    cout << \"Enter a word to classify: \";\n    cin >> word;\n\n    // Convert to lowercase for comparison\n    string lower = word;\n    for (char& c : lower) c = tolower(c);\n\n    if (lower.compare(\"mango\") < 0) {\n        cout << word << \" comes before 'mango' alphabetically\" << endl;\n    } else if (lower.compare(\"mango\") == 0) {\n        cout << word << \" equals 'mango'\" << endl;\n    } else {\n        cout << word << \" comes after 'mango' alphabetically\" << endl;\n    }\n\n    return 0;\n}",
+    explanation: "Try password 'cpp2026' for access, then a word like 'apple' (before mango) or 'zebra' (after). The range-based for loop 'for (char& c : lower)' iterates every character by reference.",
+    quiz: {
+      "question": "What does myStr.compare(\"hello\") return when myStr == \"hello\"?",
+      "options": [
+            "true",
+            "1",
+            "0",
+            "-1"
+      ],
+      "answer": 2,
+      "explanation": "compare() returns 0 when the strings are equal, mirroring C's strcmp() return value convention."
+    },
+    fillBlank: {
+      instructions: "Fill in the comparison operator and case conversion function:",
+      codeTemplate: "#include <iostream>\n#include <string>\n#include <cctype>\nusing namespace std;\n\nint main() {\n    string s = \"Hello\";\n    for (char& c : s) c = ___1___(c);\n    if (s ___2___ \"hello\") cout << \"match\" << endl;\n    return 0;\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "tolower",
+                "hint": "Function from <cctype> that converts a char to lowercase"
+        },
+        {
+                "id": 2,
+                "answer": "==",
+                "hint": "Equality comparison operator for std::string"
+        }
+]
+    }
+  },
+  {
+    id: "34-pass-by-value-vs-reference",
+    category: "Foundations Extended",
+    fileSlug: "34_pass_by_reference",
+    title: "34. Pass-by-Value vs Pass-by-Reference",
+    summary: "Understand why functions receive copies by default, when to use & to pass by reference, and how to write a proper swap function.",
+    cBridge: "In C, in-place mutation required passing pointers (void swap(int *a, int *b)) and dereferencing with *a and *b. C++ introduces references: void swap(int& a, int& b) achieves the same result with cleaner syntax — no ampersand at call site, no dereference asterisk inside.",
+    content: "\n<h3>Pass-by-Value (Default)</h3>\n<p>By default, function parameters in C++ are <em>copies</em> of the arguments. Mutations inside the function do not affect the original variable:</p>\n\n<pre><code>void doubleIt(int n) {\n    n = n * 2; // Only modifies the LOCAL copy\n}\n\nint x = 5;\ndoubleIt(x);\ncout << x; // Still 5</code></pre>\n\n<h3>Pass-by-Reference with <code>&amp;</code></h3>\n<p>Adding <code>&amp;</code> to the parameter type makes the parameter an <em>alias</em> — it refers directly to the caller's variable. Any change is permanent:</p>\n\n<pre><code>void doubleIt(int& n) {\n    n = n * 2; // Modifies the ORIGINAL\n}\n\nint x = 5;\ndoubleIt(x);\ncout << x; // 10</code></pre>\n\n<h3>Classic Swap with References</h3>\n<pre><code>void swap(int& a, int& b) {\n    int temp = a;\n    a = b;\n    b = temp;\n}</code></pre>",
+    starterCode: "// 34_pass_by_reference.cpp\n#include <iostream>\n#include <string>\nusing namespace std;\n\n// Pass by value — caller's variable is unchanged\nvoid attemptDouble(int n) {\n    n *= 2;\n    cout << \"Inside attemptDouble: n = \" << n << endl;\n}\n\n// Pass by reference — directly mutates the caller's variable\nvoid actualDouble(int& n) {\n    n *= 2;\n}\n\n// Swap two strings by reference\nvoid swapStrings(string& a, string& b) {\n    string temp = a;\n    a = b;\n    b = temp;\n}\n\nint main() {\n    int score = 10;\n    attemptDouble(score);\n    cout << \"After attemptDouble: score = \" << score << \" (unchanged)\" << endl;\n\n    actualDouble(score);\n    cout << \"After actualDouble:  score = \" << score << \" (doubled)\" << endl;\n\n    string city1 = \"Lagos\";\n    string city2 = \"Abuja\";\n    cout << \"Before swap: \" << city1 << \" | \" << city2 << endl;\n    swapStrings(city1, city2);\n    cout << \"After swap:  \" << city1 << \" | \" << city2 << endl;\n\n    return 0;\n}",
+    explanation: "Notice that calling attemptDouble(score) leaves score unchanged because the function receives a copy. actualDouble(score) uses int& and modifies the original.",
+    quiz: {
+      "question": "What is the output of the following code?\nvoid add(int x) { x += 100; }\nint n = 5; add(n); cout << n;",
+      "options": [
+            "105",
+            "5",
+            "100",
+            "Compile error"
+      ],
+      "answer": 1,
+      "explanation": "x is a copy. The original n is never changed, so the output is 5."
+    },
+    fillBlank: {
+      instructions: "Make this function modify the caller's variable by using a reference parameter:",
+      codeTemplate: "#include <iostream>\nusing namespace std;\n\nvoid reset(int ___1___ val) {\n    val = 0;\n}\n\nint main() {\n    int score = 42;\n    reset(___2___);\n    cout << score << endl; // should print 0\n    return 0;\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "&",
+                "hint": "Reference operator placed after the type"
+        },
+        {
+                "id": 2,
+                "answer": "score",
+                "hint": "The variable to pass by reference"
+        }
+]
+    }
+  },
+  {
+    id: "35-exception-handling",
+    category: "Foundations Extended",
+    fileSlug: "35_exception_handling",
+    title: "35. Exception Handling (try / catch / throw)",
+    summary: "Detect and recover from runtime errors using try blocks, catch handlers, and thrown exceptions.",
+    cBridge: "C had no exception mechanism. Errors were signalled by return codes (if (result == -1) handle_error()). C++ introduces first-class exceptions: throw any value from deep inside a call stack, and the nearest matching catch block up the call chain will handle it — no manual error propagation.",
+    content: "\n<h3>The try-catch Pattern</h3>\n<p>Wrap code that might fail inside a <code>try</code> block. If a <code>throw</code> statement executes, control immediately jumps to the corresponding <code>catch</code> block:</p>\n\n<pre><code>try {\n    // Risky code\n    if (divisor == 0) throw \"Cannot divide by zero!\";\n    cout << numerator / divisor;\n} catch (const char* message) {\n    cout << \"Error: \" << message << endl;\n}</code></pre>\n\n<h3>Throwing and Catching Different Types</h3>\n<p>You can throw any value — a string literal (<code>const char*</code>), an integer error code, or a standard exception object from <code>&lt;stdexcept&gt;</code>:</p>\n\n<pre><code>#include &lt;stdexcept&gt;\nthrow runtime_error(\"File not found\");\n\n} catch (const runtime_error& e) {\n    cout << e.what() << endl;\n}</code></pre>\n\n<h3>Multiple catch Blocks</h3>\n<p>A single <code>try</code> block can have multiple <code>catch</code> clauses, each matching a different thrown type. A catch-all clause <code>catch (...)</code> matches anything:</p>\n<pre><code>catch (int errorCode) { ... }\ncatch (const string& msg) { ... }\ncatch (...) { cout << \"Unknown error\"; }</code></pre>",
+    starterCode: "// 35_exception_handling.cpp\n#include <iostream>\n#include <string>\n#include <stdexcept>\nusing namespace std;\n\ndouble safeDivide(double a, double b) {\n    if (b == 0.0) {\n        throw runtime_error(\"Division by zero is undefined!\");\n    }\n    return a / b;\n}\n\nint parsePositive(int n) {\n    if (n < 0) throw invalid_argument(\"Number must be positive.\");\n    return n;\n}\n\nint main() {\n    // Test 1: Division by zero\n    try {\n        cout << safeDivide(10.0, 2.0) << endl;\n        cout << safeDivide(10.0, 0.0) << endl; // This throws\n    } catch (const runtime_error& e) {\n        cout << \"Caught runtime_error: \" << e.what() << endl;\n    }\n\n    // Test 2: Invalid argument\n    try {\n        cout << parsePositive(42) << endl;\n        cout << parsePositive(-5) << endl; // This throws\n    } catch (const invalid_argument& e) {\n        cout << \"Caught invalid_argument: \" << e.what() << endl;\n    }\n\n    cout << \"Program continues after exceptions.\" << endl;\n    return 0;\n}",
+    explanation: "Notice that after a catch block handles the exception, program execution continues normally after the entire try-catch structure — the program does not crash.",
+    quiz: {
+      "question": "What happens to code in a try block that appears AFTER a throw statement executes?",
+      "options": [
+            "It executes normally",
+            "It is skipped — control jumps immediately to the matching catch block",
+            "It causes a double-throw compile error",
+            "It executes only if the exception was a runtime_error"
+      ],
+      "answer": 1,
+      "explanation": "A throw immediately transfers control out of the try block. Any remaining lines in that block are skipped."
+    },
+    fillBlank: {
+      instructions: "Fill in the keywords to complete a safe divide function with exception handling:",
+      codeTemplate: "#include <iostream>\n#include <stdexcept>\nusing namespace std;\n\ndouble safe(double a, double b) {\n    if (b == 0) ___1___ runtime_error(\"zero!\");\n    return a / b;\n}\n\nint main() {\n    ___2___ {\n        cout << safe(9, 0);\n    } catch (const runtime_error& e) {\n        cout << e.what();\n    }\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "throw",
+                "hint": "Keyword that signals an error condition"
+        },
+        {
+                "id": 2,
+                "answer": "try",
+                "hint": "Block that wraps potentially-throwing code"
+        }
+]
+    }
+  },
+  {
+    id: "36-input-grade-calculator",
+    category: "Foundations Extended",
+    fileSlug: "36_grade_calculator",
+    title: "36. Interactive Grade Calculator with Exception Handling",
+    summary: "Read multiple exam scores from the user, compute an average, and map it to a letter grade using switch — with exception handling for invalid input.",
+    cBridge: "This lesson builds a real-world input loop: reading N values from cin, accumulating them in a sum, computing an average, then using a switch on an integer bracket to produce a letter grade — the same pattern you'd use in a C console program, now enriched with exceptions.",
+    content: "\n<h3>Combining cin Loops with Exceptions</h3>\n<p>Real programs often need to validate user input. The pattern is: read inside a loop, validate inside a <code>try</code> block, and let the <code>catch</code> handle bad values gracefully:</p>\n\n<pre><code>for (int i = 0; i &lt; n; i++) {\n    int score;\n    cin &gt;&gt; score;\n    if (score &lt; 0 || score &gt; 100)\n        throw out_of_range(\"Score out of range\");\n    sum += score;\n}</code></pre>\n\n<h3>Mapping Average to Letter Grade via switch</h3>\n<p>Integer division lets us bucket a percentage into a letter grade. Dividing by 10 gives a bucket number (9 = 90s, 8 = 80s, etc.):</p>\n\n<pre><code>switch (static_cast&lt;int&gt;(avg) / 10) {\n    case 10:\n    case 9:  cout &lt;&lt; \"A\"; break;\n    case 8:  cout &lt;&lt; \"B\"; break;\n    case 7:  cout &lt;&lt; \"C\"; break;\n    case 6:  cout &lt;&lt; \"D\"; break;\n    default: cout &lt;&lt; \"F\";\n}</code></pre>",
+    starterCode: "// 36_grade_calculator.cpp\n#include <iostream>\n#include <stdexcept>\nusing namespace std;\n\nchar letterGrade(double avg) {\n    switch (static_cast<int>(avg) / 10) {\n        case 10:\n        case 9:  return 'A';\n        case 8:  return 'B';\n        case 7:  return 'C';\n        case 6:  return 'D';\n        default: return 'F';\n    }\n}\n\nint main() {\n    int n;\n    cout << \"How many scores? \";\n    cin >> n;\n\n    double sum = 0.0;\n\n    try {\n        for (int i = 1; i <= n; i++) {\n            int score;\n            cout << \"Score \" << i << \": \";\n            cin >> score;\n\n            if (score < 0 || score > 100) {\n                throw out_of_range(\"Score must be between 0 and 100.\");\n            }\n            sum += score;\n        }\n\n        double avg = sum / n;\n        cout << \"\\nAverage: \" << avg << endl;\n        cout << \"Letter grade: \" << letterGrade(avg) << endl;\n\n    } catch (const out_of_range& e) {\n        cout << \"Error: \" << e.what() << endl;\n    }\n\n    return 0;\n}",
+    explanation: "Try entering 3 scores: 85, 92, 77. Average = 84.67, grade = B. Then try a score of 150 to trigger the exception.",
+    quiz: {
+      "question": "For an average of 73.5, what does static_cast<int>(73.5) / 10 evaluate to, and what grade does that produce?",
+      "options": [
+            "7, grade C",
+            "7, grade D",
+            "6, grade D",
+            "8, grade B"
+      ],
+      "answer": 0,
+      "explanation": "static_cast<int>(73.5) = 73. 73 / 10 = 7 (integer division). Switch case 7 returns 'C'."
+    },
+    fillBlank: {
+      instructions: "Fill in the cast and the exception type for an out-of-bounds score check:",
+      codeTemplate: "#include <iostream>\n#include <stdexcept>\nusing namespace std;\n\nint main() {\n    int score;\n    cin >> score;\n    try {\n        if (score < 0 || score > 100)\n            throw ___1___(\"Score invalid!\");\n        double pct = ___2___<double>(score);\n        cout << pct << endl;\n    } catch (const out_of_range& e) {\n        cout << e.what();\n    }\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "out_of_range",
+                "hint": "Standard exception for values outside a valid range"
+        },
+        {
+                "id": 2,
+                "answer": "static_cast",
+                "hint": "C++ named cast operator"
+        }
+]
+    }
+  },
+  {
+    id: "37-virtual-functions-and-polymorphism",
+    category: "Object-Oriented Extended",
+    fileSlug: "37_virtual_functions",
+    title: "37. Virtual Functions & Polymorphism",
+    summary: "Define a base class interface with virtual methods, override them in derived classes, and call the right implementation through a base pointer at runtime.",
+    cBridge: "C has no native polymorphism mechanism. Engineers simulated it using function pointers in structs (struct Shape { void (*draw)(void); }). C++ builds this into the language with the virtual keyword. The compiler maintains a vtable (virtual dispatch table) so the correct method version is called at runtime even through a base pointer.",
+    content: "\n<h3>The Problem Without <code>virtual</code></h3>\n<p>Without <code>virtual</code>, calling a method through a base class pointer always calls the <em>base class</em> version, even if the object is a derived type:</p>\n\n<pre><code>class Shape { public: void draw() { cout &lt;&lt; \"Drawing shape\"; } };\nclass Circle : public Shape { public: void draw() { cout &lt;&lt; \"Drawing circle\"; } };\n\nShape* s = new Circle();\ns->draw(); // \"Drawing shape\" — Wrong!</code></pre>\n\n<h3>Fixing It with <code>virtual</code></h3>\n<p>Marking the base method <code>virtual</code> enables <em>dynamic dispatch</em> — the correct derived version is called:</p>\n\n<pre><code>class Shape { public: virtual void draw() { cout &lt;&lt; \"Drawing shape\"; } };\nShape* s = new Circle();\ns->draw(); // \"Drawing circle\" — Correct!</code></pre>\n\n<h3>Pure Virtual Functions (Abstract Classes)</h3>\n<p>Setting a virtual method to <code>= 0</code> makes it <em>pure virtual</em>. The base class becomes <strong>abstract</strong> — it cannot be instantiated directly, only used as an interface contract that derived classes must fulfill:</p>\n\n<pre><code>class Shape {\npublic:\n    virtual void draw() = 0;  // Pure virtual\n    virtual double area() = 0;\n};</code></pre>",
+    starterCode: "// 37_virtual_functions.cpp\n#include <iostream>\n#include <cmath>\nusing namespace std;\n\n// Abstract base class\nclass Shape {\npublic:\n    virtual void describe() = 0;    // Pure virtual\n    virtual double area() = 0;      // Pure virtual\n    void printInfo() {              // Non-virtual: same for all shapes\n        cout << \"Shape -> \";\n        describe();\n        cout << \"Area: \" << area() << endl;\n    }\n};\n\nclass Circle : public Shape {\n    double radius;\npublic:\n    Circle(double r) : radius(r) {}\n    void describe() override { cout << \"Circle (r=\" << radius << \")\" << endl; }\n    double area() override { return 3.14159 * radius * radius; }\n};\n\nclass Rectangle : public Shape {\n    double width, height;\npublic:\n    Rectangle(double w, double h) : width(w), height(h) {}\n    void describe() override { cout << \"Rectangle (\" << width << \"x\" << height << \")\" << endl; }\n    double area() override { return width * height; }\n};\n\nclass Triangle : public Shape {\n    double base, ht;\npublic:\n    Triangle(double b, double h) : base(b), ht(h) {}\n    void describe() override { cout << \"Triangle (b=\" << base << \", h=\" << ht << \")\" << endl; }\n    double area() override { return 0.5 * base * ht; }\n};\n\nint main() {\n    // Polymorphic array of base pointers\n    Shape* shapes[3];\n    shapes[0] = new Circle(5.0);\n    shapes[1] = new Rectangle(4.0, 6.0);\n    shapes[2] = new Triangle(3.0, 8.0);\n\n    for (int i = 0; i < 3; i++) {\n        shapes[i]->printInfo();\n    }\n\n    // Clean up\n    for (int i = 0; i < 3; i++) delete shapes[i];\n    return 0;\n}",
+    explanation: "printInfo() calls describe() and area() through virtual dispatch. Even though the pointer type is Shape*, the runtime calls the correct Circle::area(), Rectangle::area(), etc.",
+    quiz: {
+      "question": "What does marking a virtual function = 0 mean?",
+      "options": [
+            "The function always returns zero",
+            "The function is deleted and cannot be called",
+            "The function is pure virtual: derived classes must override it and the base class cannot be instantiated",
+            "It is equivalent to writing virtual void f() {}"
+      ],
+      "answer": 2,
+      "explanation": "= 0 makes the function pure virtual. Any class with at least one pure virtual function is abstract — you cannot create an object of it directly."
+    },
+    fillBlank: {
+      instructions: "Fill in the keywords to declare an abstract base class with a pure virtual method:",
+      codeTemplate: "class Animal {\npublic:\n    ___1___ void speak() ___2___;\n};\n\nclass Dog : public Animal {\npublic:\n    void speak() override { cout << \"Woof\"; }\n};",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "virtual",
+                "hint": "Keyword enabling dynamic dispatch"
+        },
+        {
+                "id": 2,
+                "answer": "= 0",
+                "hint": "Syntax that makes a virtual function pure"
+        }
+]
+    }
+  },
+  {
+    id: "38-interactive-oop-program",
+    category: "Object-Oriented Extended",
+    fileSlug: "38_bank_account",
+    title: "38. Interactive Bank Account (OOP + Input)",
+    summary: "Build a fully interactive console bank account system: deposit, withdraw, and check balance using classes, constructors, getters, and a menu-driven input loop.",
+    cBridge: "This lesson merges OOP from the class lessons with user-input loops from the cin lessons. In C you would represent an account as a struct with separate functions; in C++ the account is a class that encapsulates its own data and behaviour.",
+    content: "\n<h3>Designing the BankAccount Class</h3>\n<p>We encapsulate a balance as a <code>private</code> member and expose it only through controlled public methods. Deposits increase the balance; withdrawals validate sufficient funds before deducting:</p>\n\n<pre><code>class BankAccount {\n    string owner;\n    double balance;\npublic:\n    BankAccount(string name, double initial)\n        : owner(name), balance(initial) {}\n\n    void deposit(double amount) { balance += amount; }\n    bool withdraw(double amount) {\n        if (amount > balance) return false;\n        balance -= amount;\n        return true;\n    }\n    double getBalance() const { return balance; }\n};</code></pre>\n\n<h3>Menu-Driven Input Loop</h3>\n<p>A <code>do-while</code> loop is ideal for menus: the body always runs at least once, showing the menu before checking whether the user chose to quit:</p>\n\n<pre><code>int choice;\ndo {\n    cout &lt;&lt; \"1. Deposit  2. Withdraw  3. Balance  0. Exit\\n\";\n    cin &gt;&gt; choice;\n    // handle choice ...\n} while (choice != 0);</code></pre>",
+    starterCode: "// 38_bank_account.cpp\n#include <iostream>\n#include <string>\nusing namespace std;\n\nclass BankAccount {\n    string owner;\n    double balance;\npublic:\n    BankAccount(string name, double initial)\n        : owner(name), balance(initial) {}\n\n    void deposit(double amount) {\n        if (amount <= 0) { cout << \"Deposit must be positive.\" << endl; return; }\n        balance += amount;\n        cout << \"Deposited $\" << amount << \". New balance: $\" << balance << endl;\n    }\n\n    void withdraw(double amount) {\n        if (amount <= 0)       { cout << \"Withdrawal must be positive.\" << endl; return; }\n        if (amount > balance)  { cout << \"Insufficient funds.\" << endl; return; }\n        balance -= amount;\n        cout << \"Withdrew $\" << amount << \". Remaining: $\" << balance << endl;\n    }\n\n    void checkBalance() const {\n        cout << owner << \"'s balance: $\" << balance << endl;\n    }\n\n    string getOwner() const { return owner; }\n};\n\nint main() {\n    string name;\n    double opening;\n\n    cout << \"Account holder name: \";\n    getline(cin, name);\n    cout << \"Opening deposit ($): \";\n    cin >> opening;\n\n    BankAccount acct(name, opening);\n    cout << \"\\nAccount created for \" << acct.getOwner() << \"!\" << endl;\n\n    int choice;\n    do {\n        cout << \"\\n1. Deposit  2. Withdraw  3. Balance  0. Exit\\n\";\n        cout << \"Choice: \";\n        cin >> choice;\n\n        if (choice == 1) {\n            double amt; cout << \"Amount: $\"; cin >> amt;\n            acct.deposit(amt);\n        } else if (choice == 2) {\n            double amt; cout << \"Amount: $\"; cin >> amt;\n            acct.withdraw(amt);\n        } else if (choice == 3) {\n            acct.checkBalance();\n        }\n    } while (choice != 0);\n\n    cout << \"Goodbye, \" << acct.getOwner() << \"!\" << endl;\n    return 0;\n}",
+    explanation: "Try: name=Ada, opening=1000, then deposit 250, withdraw 500, check balance. Withdrawing more than the balance shows the guard in action.",
+    quiz: {
+      "question": "Why is the 'balance' member declared private rather than public in BankAccount?",
+      "options": [
+            "private members use less memory",
+            "To prevent external code from directly setting balance to a negative value, enforcing all changes through validated methods",
+            "private members cannot be accessed by constructors",
+            "Only private members can be initialised in constructors"
+      ],
+      "answer": 1,
+      "explanation": "Encapsulation means the class controls how its data is modified. Public access would allow any code to write acct.balance = -999999; bypassing all validation."
+    },
+    fillBlank: {
+      instructions: "Complete the constructor initialiser list and the const qualifier on a getter:",
+      codeTemplate: "class Account {\n    double balance;\npublic:\n    Account(double b) ___1___ balance(b) {}\n    double get() ___2___ { return balance; }\n};",
+      blanks: [
+        {
+                "id": 1,
+                "answer": ":",
+                "hint": "Colon that begins the member initialiser list"
+        },
+        {
+                "id": 2,
+                "answer": "const",
+                "hint": "Qualifier that promises the method does not modify the object"
+        }
+]
+    }
+  },
+  {
+    id: "39-references-and-pointers-compared",
+    category: "Memory Architecture Extended",
+    fileSlug: "39_references_vs_pointers",
+    title: "39. References vs Pointers Side-by-Side",
+    summary: "Compare C++ references and raw pointers: syntax, mutability, nullable semantics, and when to prefer each.",
+    cBridge: "In C, indirect access always used pointers. C++ keeps raw pointers for dynamic allocation and nullable-pointer patterns, but introduces references as a cleaner alternative when: the target always exists, the binding never changes, and you want value-like syntax with pass-by-reference semantics.",
+    content: "\n<h3>Reference Syntax Refresher</h3>\n<p>A reference is an alias — another name for an existing variable. It is declared with <code>&amp;</code> after the type:</p>\n\n<pre><code>int x = 42;\nint& ref = x;   // ref IS x\nref = 99;       // x is now 99\ncout &lt;&lt; x;     // 99</code></pre>\n\n<h3>Pointer Syntax Review</h3>\n<p>A pointer stores a memory address. Use <code>*</code> to declare and dereference, <code>&amp;</code> to take the address of a variable:</p>\n\n<pre><code>int x = 42;\nint* ptr = &x;  // ptr holds the address of x\n*ptr = 99;      // dereference to modify x\ncout &lt;&lt; x;     // 99</code></pre>\n\n<h3>Key Differences</h3>\n<ul>\n  <li><strong>Nullability:</strong> A pointer can be <code>nullptr</code>; a reference always refers to a valid object.</li>\n  <li><strong>Rebinding:</strong> A pointer can point to different things at different times; a reference always refers to the same object.</li>\n  <li><strong>Syntax:</strong> References use clean value-like syntax; pointers need <code>*</code> and <code>-&gt;</code>.</li>\n  <li><strong>Arithmetic:</strong> Pointers support arithmetic (<code>ptr++</code>); references do not.</li>\n</ul>",
+    starterCode: "// 39_references_vs_pointers.cpp\n#include <iostream>\nusing namespace std;\n\nvoid incrementByRef(int& n)    { n++; }\nvoid incrementByPtr(int* n)    { (*n)++; }\n\nint main() {\n    int a = 10;\n\n    // Reference approach\n    int& refA = a;\n    refA = 20;\n    cout << \"After ref assignment: a = \" << a << endl;\n\n    incrementByRef(a);\n    cout << \"After incrementByRef: a = \" << a << endl;\n\n    // Pointer approach\n    int* ptrA = &a;\n    *ptrA = 100;\n    cout << \"After pointer deref assignment: a = \" << a << endl;\n\n    incrementByPtr(&a);\n    cout << \"After incrementByPtr: a = \" << a << endl;\n\n    // Pointer rebinding — references cannot do this\n    int b = 999;\n    ptrA = &b;\n    cout << \"ptrA now points to b: \" << *ptrA << endl;\n\n    // Null pointer check\n    int* maybeNull = nullptr;\n    if (maybeNull == nullptr) {\n        cout << \"Pointer is null — safe to check!\" << endl;\n    }\n\n    return 0;\n}",
+    explanation: "The output walks you through both styles in parallel. Note that incrementByRef is called with just 'a', while incrementByPtr needs '&a' at the call site.",
+    quiz: {
+      "question": "Which of the following is TRUE about C++ references compared to pointers?",
+      "options": [
+            "References can be null",
+            "References can be rebound to different variables after initialisation",
+            "References must be initialised when declared and always refer to the same object",
+            "References use the * operator for access"
+      ],
+      "answer": 2,
+      "explanation": "A reference must be bound at declaration and cannot be rebound. It is always a valid alias — it cannot be null, and requires no dereference operator."
+    },
+    fillBlank: {
+      instructions: "Fill in to declare a reference and dereference a pointer:",
+      codeTemplate: "#include <iostream>\nusing namespace std;\n\nint main() {\n    int x = 5;\n    int___1___ ref = x;   // reference\n    int* ptr = &x;\n    ___2___ptr = 10;      // dereference to modify x\n    cout << ref;           // prints 10\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "&",
+                "hint": "Symbol after int to declare a reference type"
+        },
+        {
+                "id": 2,
+                "answer": "*",
+                "hint": "Dereference operator to access value at pointer address"
+        }
+]
+    }
+  },
+  {
+    id: "40-input-driven-word-counter",
+    category: "Foundations Extended",
+    fileSlug: "40_word_counter",
+    title: "40. Interactive Word & Character Counter",
+    summary: "Read a full sentence from the user and compute word count, character count, vowel count, and the longest word — putting strings, loops, and functions together.",
+    cBridge: "In C you would tokenise with strtok(), iterate char-by-char with a pointer, and track state with integer flags. In C++ we use std::string methods like .find(), substr(), and range-based for loops — far less error-prone and more expressive.",
+    content: "\n<h3>Tokenising with <code>stringstream</code></h3>\n<p>The <code>stringstream</code> class from <code>&lt;sstream&gt;</code> lets you treat a string as a stream and extract whitespace-separated tokens with <code>&gt;&gt;</code>:</p>\n\n<pre><code>#include &lt;sstream&gt;\nstringstream ss(sentence);\nstring word;\nwhile (ss &gt;&gt; word) {\n    wordCount++;\n}</code></pre>\n\n<h3>Checking Vowels with a Range-Based Loop</h3>\n<p>A range-based <code>for</code> loop iterates over every character in a string elegantly:</p>\n\n<pre><code>for (char c : sentence) {\n    c = tolower(c);\n    if (c=='a'||c=='e'||c=='i'||c=='o'||c=='u') vowels++;\n}</code></pre>",
+    starterCode: "// 40_word_counter.cpp\n#include <iostream>\n#include <string>\n#include <sstream>\n#include <cctype>\nusing namespace std;\n\nint countVowels(const string& s) {\n    int count = 0;\n    for (char c : s) {\n        char lower = tolower(c);\n        if (lower=='a'||lower=='e'||lower=='i'||lower=='o'||lower=='u')\n            count++;\n    }\n    return count;\n}\n\nint main() {\n    string sentence;\n    cout << \"Enter a sentence: \";\n    getline(cin, sentence);\n\n    // Character count (excluding newline)\n    int charCount = sentence.length();\n\n    // Word count and longest word using stringstream\n    int wordCount = 0;\n    string longestWord = \"\";\n    stringstream ss(sentence);\n    string token;\n    while (ss >> token) {\n        wordCount++;\n        if (token.length() > longestWord.length())\n            longestWord = token;\n    }\n\n    int vowelCount = countVowels(sentence);\n\n    cout << \"\\n--- Analysis ---\" << endl;\n    cout << \"Characters : \" << charCount << endl;\n    cout << \"Words      : \" << wordCount << endl;\n    cout << \"Vowels     : \" << vowelCount << endl;\n    cout << \"Longest    : \" << longestWord << endl;\n\n    return 0;\n}",
+    explanation: "Try the sentence: 'The quick brown fox jumps over the lazy dog'. It has 9 words, 35 chars (no spaces), 11 vowels, and 'jumps' or 'brown' as 5-letter candidates.",
+    quiz: {
+      "question": "What does 'stringstream ss(sentence); string word; ss >> word;' do?",
+      "options": [
+            "It writes the string to disk",
+            "It extracts the first whitespace-delimited word from the sentence into word",
+            "It splits the sentence into individual characters",
+            "It converts the string to an integer"
+      ],
+      "answer": 1,
+      "explanation": "stringstream wraps a string as a stream. The >> extraction operator reads whitespace-delimited tokens from it, just like cin reads from the console."
+    },
+    fillBlank: {
+      instructions: "Fill in the header and extraction to tokenise a string with stringstream:",
+      codeTemplate: "#include <iostream>\n#include <string>\n#include <___1___>\nusing namespace std;\n\nint main() {\n    string s = \"hello world\";\n    stringstream ss(s);\n    string word;\n    while (ss ___2___ word) cout << word << \"\\n\";\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "sstream",
+                "hint": "Standard header providing stringstream"
+        },
+        {
+                "id": 2,
+                "answer": ">>",
+                "hint": "Stream extraction operator"
+        }
+]
+    }
+  },
+  {
+    id: "41-function-overloading",
+    category: "Foundations Extended",
+    fileSlug: "41_function_overloading",
+    title: "41. Function Overloading",
+    summary: "Define multiple functions with the same name but different parameter lists — a core C++ feature unavailable in C.",
+    cBridge: "In C, every function must have a unique name. To add two integers vs two doubles you'd write addInt() and addDouble(). C++ allows the same name add() to be overloaded: the compiler selects the correct version based on argument types at compile time.",
+    content: "\n<h3>What Is Overloading?</h3>\n<p>Function overloading means defining multiple functions with the <em>same name</em> but <em>different parameter signatures</em> (number of parameters, their types, or both). The return type alone is not enough to distinguish overloads.</p>\n\n<pre><code>int add(int a, int b) { return a + b; }\ndouble add(double a, double b) { return a + b; }\nstring add(string a, string b) { return a + b; }</code></pre>\n\n<h3>Name Mangling Behind the Scenes</h3>\n<p>The C++ compiler encodes the parameter types into the symbol name (a process called <em>name mangling</em>). So <code>add(int,int)</code> and <code>add(double,double)</code> become distinct linker symbols. This is why C++ function overloading is a compile-time, zero-cost abstraction.</p>\n\n<h3>Overloading with Input</h3>\n<p>You can overload functions that handle user-provided data — for example, a <code>describe()</code> function that behaves differently for strings vs integers:</p>",
+    starterCode: "// 41_function_overloading.cpp\n#include <iostream>\n#include <string>\nusing namespace std;\n\n// Three overloads of 'display'\nvoid display(int n) {\n    cout << \"Integer: \" << n << endl;\n}\nvoid display(double d) {\n    cout << \"Double:  \" << d << endl;\n}\nvoid display(const string& s) {\n    cout << \"String:  \" << s << endl;\n}\n\n// Overloaded area function\ndouble area(double side) {\n    return side * side;  // Square\n}\ndouble area(double width, double height) {\n    return width * height;  // Rectangle\n}\ndouble area(double a, double b, double c) {\n    // Heron's formula for triangle\n    double s = (a + b + c) / 2.0;\n    return sqrt(s * (s-a) * (s-b) * (s-c));\n}\n\nint main() {\n    display(42);\n    display(3.14);\n    display(\"Overloading rocks\");\n\n    cout << \"Square area (5):       \" << area(5.0) << endl;\n    cout << \"Rectangle area (4,6):  \" << area(4.0, 6.0) << endl;\n    cout << \"Triangle area (3,4,5): \" << area(3.0, 4.0, 5.0) << endl;\n\n    // Interactive part: user picks a shape\n    int choice;\n    cout << \"\\nCompute area: 1=Square 2=Rectangle: \";\n    cin >> choice;\n    if (choice == 1) {\n        double s; cout << \"Side: \"; cin >> s;\n        cout << \"Area = \" << area(s) << endl;\n    } else {\n        double w, h; cout << \"Width Height: \"; cin >> w >> h;\n        cout << \"Area = \" << area(w, h) << endl;\n    }\n    return 0;\n}",
+    explanation: "The compiler resolves which area() to call purely from the number of arguments. This is compile-time polymorphism — no runtime cost.",
+    quiz: {
+      "question": "Which part of a function signature does C++ use to distinguish overloads?",
+      "options": [
+            "Only the return type",
+            "The function name only",
+            "The number and types of parameters",
+            "The variable names used inside the function body"
+      ],
+      "answer": 2,
+      "explanation": "C++ overload resolution is based on the parameter list (count and types). The return type alone cannot distinguish two overloads."
+    },
+    fillBlank: {
+      instructions: "Define a second overload of 'greet' that takes a name and age:",
+      codeTemplate: "#include <iostream>\n#include <string>\nusing namespace std;\n\nvoid greet(string name) {\n    cout << \"Hello \" << name << endl;\n}\n\nvoid ___1___(___2___ name, int age) {\n    cout << \"Hello \" << name << \", age \" << age << endl;\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "greet",
+                "hint": "Same name as the first function — that's overloading"
+        },
+        {
+                "id": 2,
+                "answer": "string",
+                "hint": "Type of the name parameter"
+        }
+]
+    }
+  },
+  {
+    id: "42-file-io-read-write",
+    category: "Foundations Extended",
+    fileSlug: "42_file_io",
+    title: "42. File I/O: Reading & Writing Files",
+    summary: "Persist data beyond the console using ofstream (write) and ifstream (read) from the <fstream> header.",
+    cBridge: "C used FILE* pointers with fopen(), fprintf(), fscanf(), and fclose(). C++ wraps this in stream objects: ofstream for output files and ifstream for input files. They work identically to cout/cin — stream insertion << and extraction >>.",
+    content: "\n<h3>Writing to a File with <code>ofstream</code></h3>\n<p><code>ofstream</code> opens a file for writing. If it doesn't exist, it's created. By default, the file is overwritten. Append mode uses <code>ios::app</code>:</p>\n\n<pre><code>#include &lt;fstream&gt;\nofstream outFile(\"notes.txt\");\nif (outFile.is_open()) {\n    outFile &lt;&lt; \"Hello, file!\" &lt;&lt; endl;\n    outFile.close();\n}</code></pre>\n\n<h3>Reading from a File with <code>ifstream</code></h3>\n<p><code>ifstream</code> opens a file for reading. Use <code>getline()</code> to read line by line in a loop until end-of-file:</p>\n\n<pre><code>ifstream inFile(\"notes.txt\");\nstring line;\nwhile (getline(inFile, line)) {\n    cout &lt;&lt; line &lt;&lt; endl;\n}\ninFile.close();</code></pre>\n\n<h3>Always Check <code>is_open()</code></h3>\n<p>If the file cannot be opened (wrong path, no permissions), <code>is_open()</code> returns <code>false</code>. Always validate before proceeding to avoid undefined behaviour.</p>",
+    starterCode: "// 42_file_io.cpp\n#include <iostream>\n#include <fstream>\n#include <string>\nusing namespace std;\n\nint main() {\n    // --- WRITE ---\n    string filename = \"diary.txt\";\n    ofstream writer(filename);\n\n    if (!writer.is_open()) {\n        cout << \"Could not open \" << filename << \" for writing.\" << endl;\n        return 1;\n    }\n\n    cout << \"How many diary entries? \";\n    int n; cin >> n; cin.ignore();\n\n    for (int i = 1; i <= n; i++) {\n        string entry;\n        cout << \"Entry \" << i << \": \";\n        getline(cin, entry);\n        writer << \"[\" << i << \"] \" << entry << \"\\n\";\n    }\n    writer.close();\n    cout << \"Saved \" << n << \" entries to \" << filename << endl;\n\n    // --- READ BACK ---\n    cout << \"\\n--- Reading diary.txt ---\\n\";\n    ifstream reader(filename);\n\n    if (!reader.is_open()) {\n        cout << \"Could not open \" << filename << \" for reading.\" << endl;\n        return 1;\n    }\n\n    string line;\n    while (getline(reader, line)) {\n        cout << line << endl;\n    }\n    reader.close();\n\n    return 0;\n}",
+    explanation: "Enter 3 entries and watch them get written to disk and immediately read back. The file 'diary.txt' will persist in the same directory as the executable after the program exits.",
+    quiz: {
+      "question": "What does ofstream outFile('log.txt', ios::app) do differently from ofstream outFile('log.txt')?",
+      "options": [
+            "It reads from the file instead of writing",
+            "It overwrites the file from the beginning",
+            "It appends new content to the end of the existing file instead of truncating it",
+            "It creates the file only if it doesn't already exist"
+      ],
+      "answer": 2,
+      "explanation": "ios::app (append mode) moves the write position to the end of the file, so new writes add to existing content rather than replacing it."
+    },
+    fillBlank: {
+      instructions: "Fill in the correct stream types to write then read a file:",
+      codeTemplate: "#include <fstream>\n#include <string>\nusing namespace std;\n\nint main() {\n    ___1___ out(\"test.txt\");\n    out << \"hello\" << endl;\n    out.close();\n\n    ___2___ in(\"test.txt\");\n    string line;\n    getline(in, line);\n    in.close();\n}",
+      blanks: [
+        {
+                "id": 1,
+                "answer": "ofstream",
+                "hint": "Output file stream — for writing"
+        },
+        {
+                "id": 2,
+                "answer": "ifstream",
+                "hint": "Input file stream — for reading"
         }
 ]
     }

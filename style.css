@@ -1135,6 +1135,39 @@ input:focus-visible {
   word-break: break-all;
 }
 
+.terminal-input-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem 0.75rem;
+}
+
+.terminal-input-form[hidden] {
+  display: none;
+}
+
+.terminal-input-form label {
+  color: var(--terminal-text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.terminal-input-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.terminal-input-form input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* Fill-in-the-blanks Code Drill */
 .fill-blank-wrapper {
   margin-top: 1rem;

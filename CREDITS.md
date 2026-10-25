@@ -15,12 +15,17 @@ Responsible for the site architecture, interface design, companion servers, and 
 
 ## Curriculum references & conceptual outline
 
-The syllabus outline and conceptual topic progression for the foundational lessons (Lessons 1–20) reference the introductory C++ course by Mike Dane, originally published by **freeCodeCamp.org**:
+The syllabus outline and conceptual topic progression for the foundational lessons (Lessons 1–20) reference the introductory C++ course by Mike Dane, originally published by **freeCodeCamp.org**.
+
+The extended curriculum (Lessons 31–42) — covering constants, type casting, exception handling, virtual functions, function overloading, file I/O, references vs pointers, and a series of input-driven mini-projects — was independently designed for this platform, drawing on concepts from the C++ for Beginners course by Daniele Gancea, originally published by **freeCodeCamp.org**:
 
 > **C++ Tutorial for Beginners – Full Course**  
 > [Watch on YouTube](https://www.youtube.com/watch?v=vLnPwxZdW4Y)
 
-The course served as a reference for selecting and sequencing introductory programming topics. All lesson text, explanatory breakdowns, "From C to C++" transition notes, interactive fill-in-the-blank drills, quizzes, and starter code examples were written independently for this platform (with AI writing and structuring assistance), rather than reproducing the video transcript.
+> **C++ Programming Course – Beginner to Advanced (Daniel Gancea / freeCodeCamp)**  
+> [Watch on YouTube](https://www.youtube.com/watch?v=8jLOx1hD3_o)
+
+The courses served as references for selecting and sequencing introductory and intermediate programming topics. All lesson text, explanatory breakdowns, "From C to C++" transition notes, interactive fill-in-the-blank drills, quizzes, and starter code examples were written independently for this platform (with AI writing and structuring assistance), rather than reproducing the video transcript.
 
 The intermediate systems lessons (Lessons 21–23) and the capstone modules (Lessons 24–30) were conceived separately to bridge the gap between basic syntax and terminal-based systems programming.
 
