@@ -30,7 +30,7 @@ User-facing changes for each release are recorded here. Versions use
 - Correct lesson content string boundaries so JavaScript loads the curriculum
   and renders the lesson navigation.
 
-## 0.1.1.3-beta - 2026-10-26
+## 0.1.1.5-beta - 2026-10-26
 
 ### Added
 
