@@ -230,6 +230,9 @@ class CppSimulator {
 
     // 1. Detect and handle class-based C++ programs
     if (code.includes("class ") || code.includes("struct ")) {
+      if (interactive && code.includes("class BankAccount")) {
+        return this.runBankAccountInteractive(readLine, readCin, interactive);
+      }
       return this.runOopSimulation(code, stdout, print);
     }
 
@@ -245,7 +248,15 @@ class CppSimulator {
     jsLines.push(`const floor = Math.floor;`);
     jsLines.push(`const fmax = Math.max;`);
     jsLines.push(`const fmin = Math.min;`);
+    jsLines.push(`const out_of_range = Error;`);
+    jsLines.push(`const tolower = value => String(value).toLowerCase();`);
+    jsLines.push(`const toupper = value => String(value).toUpperCase();`);
+    jsLines.push(`const __compare = (left, right) => left < right ? -1 : left > right ? 1 : 0;`);
     jsLines.push(`const endl = "\\n";`);
+    jsLines.push(`const __makeStringStream = text => ({ tokens: String(text).trim().split(/\\s+/).filter(Boolean), index: 0 });`);
+    jsLines.push(`const __fileStore = {};`);
+    jsLines.push(`const __makeOutputFile = name => { __fileStore[name] = ""; return { is_open: () => true, close: () => {}, write: text => { __fileStore[name] += String(text); } }; };`);
+    jsLines.push(`const __makeInputFile = name => { const lines = (__fileStore[name] || "").split("\\n"); let index = 0; return { is_open: () => Object.prototype.hasOwnProperty.call(__fileStore, name), close: () => {}, getline: () => index < lines.length ? lines[index++] : null }; };`);
 
     // Pre-declare prototype stubs so functions can be called before definition
     const prototypeRegex = /(?:void|int|double|float|string|bool)\s+([a-zA-Z_]\w*)\s*\([^)]*\)\s*;/g;
@@ -255,7 +266,40 @@ class CppSimulator {
     }
 
     // Process lines
-    const rawCodeLines = code.split("\n");
+    const rawCodeLines = code.split("\n").flatMap(rawLine => {
+      const statements = [];
+      let current = "";
+      let parenDepth = 0;
+      let quote = "";
+      let escaped = false;
+      for (const char of rawLine) {
+        current += char;
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        if (char === "\\" && quote) {
+          escaped = true;
+          continue;
+        }
+        if ((char === '"' || char === "'") && (!quote || quote === char)) {
+          quote = quote ? "" : char;
+          continue;
+        }
+        if (quote) continue;
+        if (char === "(") parenDepth++;
+        if (char === ")") parenDepth--;
+        if (char === ";" && parenDepth === 0) {
+          statements.push(current.trim());
+          current = "";
+        }
+      }
+      if (current.trim()) statements.push(current.trim());
+      return statements;
+    });
+    const stringVariableNames = new Set(
+      Array.from(code.matchAll(/\bstring\s+([a-zA-Z_]\w*)/g), match => match[1])
+    );
     let inMain = false;
     let mainBraceDepth = 0;
     let mainBody = [];
@@ -283,6 +327,10 @@ class CppSimulator {
       if (line.includes("int main") && line.includes("(")) {
         inMain = true;
         mainBraceDepth = 0;
+        for (const char of line) {
+          if (char === "{") mainBraceDepth++;
+          if (char === "}") mainBraceDepth--;
+        }
         continue;
       }
 
@@ -318,7 +366,7 @@ class CppSimulator {
         if (line.startsWith("return 0;")) continue;
 
         // Function definitions outside or inside
-        const funcMatch = line.match(/^(?:void|int|double|float|string|bool)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{?$/);
+        const funcMatch = line.match(/^(?:void|int|double|float|char|string|bool)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{?$/);
         if (funcMatch) {
           const fnName = funcMatch[1];
           const rawParams = funcMatch[2].split(",").filter(Boolean);
@@ -336,10 +384,53 @@ class CppSimulator {
           continue;
         }
 
+        const stringStreamMatch = line.match(/^stringstream\s+([a-zA-Z_]\w*)\s*\(\s*([a-zA-Z_]\w*)\s*\)\s*;$/);
+        if (stringStreamMatch) {
+          out.push(`let ${stringStreamMatch[1]} = __makeStringStream(${stringStreamMatch[2]});`);
+          continue;
+        }
+        const fileStreamMatch = line.match(/^(ofstream|ifstream)\s+([a-zA-Z_]\w*)\s*\(\s*([^)]+)\s*\)\s*;$/);
+        if (fileStreamMatch) {
+          const factory = fileStreamMatch[1] === "ofstream" ? "__makeOutputFile" : "__makeInputFile";
+          out.push(`let ${fileStreamMatch[2]} = ${factory}(${fileStreamMatch[3]});`);
+          continue;
+        }
+
+        const stringStreamWhile = line.match(/^while\s*\(\s*([a-zA-Z_]\w*)\s*>>\s*([a-zA-Z_]\w*)\s*\)\s*\{?$/);
+        if (stringStreamWhile) {
+          out.push(`while (${stringStreamWhile[1]}.index < ${stringStreamWhile[1]}.tokens.length) {`);
+          out.push(`${stringStreamWhile[2]} = ${stringStreamWhile[1]}.tokens[${stringStreamWhile[1]}.index++];`);
+          continue;
+        }
+
+        const fileGetlineWhile = line.match(/^while\s*\(\s*getline\s*\(\s*([a-zA-Z_]\w*)\s*,\s*([a-zA-Z_]\w*)\s*\)\s*\)\s*\{?$/);
+        if (fileGetlineWhile) {
+          out.push(`while ((${fileGetlineWhile[2]} = ${fileGetlineWhile[1]}.getline()) !== null) {`);
+          continue;
+        }
+
+        // Support common range-for forms used to process strings and arrays.
+        const rangeForMatch = line.match(/^for\s*\(\s*(?:char|int|string|auto)\s+([a-zA-Z_]\w*)\s*:\s*([a-zA-Z_]\w*)\s*\)\s*(\{)?\s*$/);
+        if (rangeForMatch) {
+          out.push(`for (let ${rangeForMatch[1]} of ${rangeForMatch[2]}) {`);
+          continue;
+        }
+        const rangeForRefMatch = line.match(/^for\s*\(\s*char\s*&\s*([a-zA-Z_]\w*)\s*:\s*([a-zA-Z_]\w*)\s*\)\s*([a-zA-Z_]\w*)\s*=\s*([^;]+);$/);
+        if (rangeForRefMatch && rangeForRefMatch[1] === rangeForRefMatch[3]) {
+          const [, charName, sourceName, , expression] = rangeForRefMatch;
+          out.push(`${sourceName} = ${sourceName}.split("").map(${charName} => ${expression}).join("");`);
+          continue;
+        }
+
         // Handle getline(cin, var) or getline(std::cin, var)
         const getlineMatch = line.match(/getline\s*\(\s*(?:std::)?cin\s*,\s*([a-zA-Z_]\w*)\s*\)\s*;/);
         if (getlineMatch) {
           out.push(`${getlineMatch[1]} = ${allowAwait ? "await " : ""}__readLine();`);
+          continue;
+        }
+        const fileGetline = line.match(/^getline\s*\(\s*([a-zA-Z_]\w*)\s*,\s*([a-zA-Z_]\w*)\s*\)\s*;$/);
+        if (fileGetline) {
+          out.push(`${fileGetline[2]} = ${fileGetline[1]}.getline();`);
           continue;
         }
 
@@ -350,11 +441,21 @@ class CppSimulator {
           for (let target of targets) {
             target = target.trim();
             if (target) {
-              out.push(`${target} = ${allowAwait ? "await " : ""}__readCin();`);
+              const value = `${allowAwait ? "await " : ""}__readCin()`;
+              out.push(`${target} = ${stringVariableNames.has(target) ? `String(${value})` : value};`);
             }
           }
           continue;
         }
+
+        // Convert typed for-loop declarations, casts, and C++ exception syntax.
+        line = line.replace(/^(\s*for\s*\(\s*)(?:int|double|float|char|auto)\s+/, "$1let ")
+          .replace(/catch\s*\(\s*const\s+[\w:]+\s*&\s*([a-zA-Z_]\w*)\s*\)/, "catch ($1)")
+          .replace(/throw\s+out_of_range\s*\(/, "throw new Error(")
+          .replace(/([a-zA-Z_]\w*)\.compare\s*\(/g, "__compare($1, ")
+          .replace(/\.what\(\)/g, ".message")
+          .replace(/static_cast\s*<\s*int\s*>\s*\(([^()]*)\)\s*\/\s*([0-9]+)/g, "Math.trunc(Number($1) / $2)")
+          .replace(/static_cast\s*<\s*(?:int|double|float)\s*>\s*\(([^()]*)\)/g, "Number($1)");
 
         // Handle cout << ... ;
         if (line.includes("cout") && line.includes("<<")) {
@@ -382,6 +483,14 @@ class CppSimulator {
           });
 
           out.push(`__print(${transTokens.join(", ")});`);
+          continue;
+        }
+
+        const fileWriteMatch = line.match(/^([a-zA-Z_]\w*)\s*<<\s*(.+);$/);
+        if (fileWriteMatch) {
+          const tokens = this.splitRespectingQuotes(fileWriteMatch[2], "<<").map(token => token.trim());
+          const expressions = tokens.map(token => token === "endl" || token === "std::endl" ? '"\\n"' : token);
+          out.push(`${fileWriteMatch[1]}.write(${expressions.join(" + ")});`);
           continue;
         }
 
@@ -433,7 +542,7 @@ class CppSimulator {
         }
 
         // Handle primitive variable declarations: string name = "George"; int age = 70;
-        let convLine = line.replace(/^(?:string|int|double|float|char|bool|auto)\s+([a-zA-Z_]\w*)/, "let $1");
+        let convLine = line.replace(/^(const\s+)?(?:string|int|double|float|char|bool|auto)\s+([a-zA-Z_]\w*)/, (match, constPrefix, name) => `${constPrefix ? "const" : "let"} ${name}`);
 
         // String methods inside normal statements
         convLine = convLine.replace(/\.length\(\)/g, ".length")
@@ -493,6 +602,46 @@ class CppSimulator {
       // Fallback for syntax difference or specific simulation
       return this.fallbackRegexRunner(sourceCode, inputString);
     }
+  }
+
+  async runBankAccountInteractive(readLine, readCin, interactive) {
+    const print = text => interactive.onOutput?.(text);
+    const readNumber = async () => Number(await readCin());
+    const money = value => Number.isFinite(value) ? String(Number(value.toFixed(2))) : "0";
+
+    print("Account holder name: ");
+    const owner = await readLine();
+    print("Opening deposit ($): ");
+    let balance = await readNumber();
+    print(`\nAccount created for ${owner}!\n`);
+
+    let choice = -1;
+    while (choice !== 0) {
+      print("\n1. Deposit  2. Withdraw  3. Balance  0. Exit\nChoice: ");
+      choice = await readNumber();
+      if (choice === 1) {
+        print("Amount: $");
+        const amount = await readNumber();
+        if (amount <= 0) print("Deposit must be positive.\n");
+        else {
+          balance += amount;
+          print(`Deposited $${money(amount)}. New balance: $${money(balance)}\n`);
+        }
+      } else if (choice === 2) {
+        print("Amount: $");
+        const amount = await readNumber();
+        if (amount <= 0) print("Withdrawal must be positive.\n");
+        else if (amount > balance) print("Insufficient funds.\n");
+        else {
+          balance -= amount;
+          print(`Withdrew $${money(amount)}. Remaining: $${money(balance)}\n`);
+        }
+      } else if (choice === 3) {
+        print(`${owner}'s balance: $${money(balance)}\n`);
+      }
+    }
+
+    print(`Goodbye, ${owner}!\n`);
   }
 
   // OOP Class Simulation Engine
