@@ -1,7 +1,8 @@
 # Changelog
 
-User-facing changes for each release are recorded here. Versions follow
-[Semantic Versioning](https://semver.org/).
+User-facing changes for each release are recorded here. Versions use
+`MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
+
 
 ## 0.1.1 - 2026-10-25
 
@@ -28,3 +29,10 @@ User-facing changes for each release are recorded here. Versions follow
 
 - Correct lesson content string boundaries so JavaScript loads the curriculum
   and renders the lesson navigation.
+
+## 0.1.1.1-beta - 2026-10-26
+
+### Added
+
+- Extend browser simulator support for common C++ stream, file, string, and loop patterns.
+- Add an interactive BankAccount flow for deposits, withdrawals, balance checks, and exit.

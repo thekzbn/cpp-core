@@ -26,11 +26,15 @@ jobs:
         shell: pwsh
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          $version = (Get-Content VERSION -Raw).Trim()
-          if ($env:RELEASE_TAG -ne "v$version") {
+          run: |
+            $version = (Get-Content VERSION -Raw).Trim()
+            if ($version -notmatch '^\d+\.\d+\.\d+\.\d+(-(?:alpha|beta))?$') {
+            throw "VERSION must be MAJOR.MINOR.PATCH.REVISION with optional -alpha or -beta; found '$version'."
+            }
+            if ($env:RELEASE_TAG -ne "v$version") {
             throw "Tag $env:RELEASE_TAG does not match VERSION ($version)."
-          }
+            }
+
 
       - name: Build Windows launcher
         shell: pwsh
@@ -84,7 +88,14 @@ jobs:
           if (-not $assets) {
             throw 'No release assets were created.'
           }
-          & gh release create $env:RELEASE_TAG @assets --generate-notes --verify-tag --title $env:RELEASE_TAG
+
+          $version = (Get-Content VERSION -Raw).Trim()
+          if ($version -match '-(alpha|beta)$') {
+            & gh release create $env:RELEASE_TAG @assets --generate-notes --verify-tag --title $env:RELEASE_TAG --prerelease
+          } else {
+            & gh release create $env:RELEASE_TAG @assets --generate-notes --verify-tag --title $env:RELEASE_TAG
+          }
+
           if ($LASTEXITCODE -ne 0) {
             throw "GitHub Release creation failed with exit code $LASTEXITCODE."
           }
