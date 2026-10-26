@@ -36,3 +36,9 @@ User-facing changes for each release are recorded here. Versions use
 
 - Extend browser simulator support for common C++ stream, file, string, and loop patterns.
 - Add an interactive BankAccount flow for deposits, withdrawals, balance checks, and exit.
+
+## 0.1.1.6-beta - 2026-10-26
+
+### Fixed
+
+- Rebuilt build launcher so action runs properly

@@ -214,12 +214,13 @@ namespace Quing.Learn
             // Candidate Chromium paths (including Vivaldi, Helium, Chrome, Brave, Edge)
             string[] candidates = new string[]
             {
-                // Vivaldi
-                Path.Combine(localAppData, @"Vivaldi\Application\vivaldi.exe"),
-                Path.Combine(progFiles, @"Vivaldi\Application\vivaldi.exe"),
 
                 // Helium Chrome
                 Path.Combine(localAppData, @"imput\Helium\Application\chrome.exe"),
+
+                // Vivaldi
+                Path.Combine(localAppData, @"Vivaldi\Application\vivaldi.exe"),
+                Path.Combine(progFiles, @"Vivaldi\Application\vivaldi.exe"),
 
                 // Google Chrome
                 Path.Combine(progFiles, @"Google\Chrome\Application\chrome.exe"),

@@ -44,6 +44,24 @@ jobs:
             throw "Launcher build failed."
           }
 
+          $launcherPath = "$env:RUNNER_TEMP\Quing C++ Core.exe"
+          if (-not (Test-Path -LiteralPath $launcherPath)) {
+            throw "Launcher was not created."
+          }
+
+          $stream = [System.IO.File]::OpenRead($launcherPath)
+          try {
+            $signature = New-Object byte[] 2
+            $bytesRead = $stream.Read($signature, 0, 2)
+          } finally {
+            $stream.Dispose()
+          }
+
+          if ($bytesRead -ne 2 -or $signature[0] -ne 0x4D -or $signature[1] -ne 0x5A) {
+            throw "Launcher output is not a valid Windows executable."
+          }
+
+
       - name: Assemble packages and checksums
         shell: pwsh
         run: |

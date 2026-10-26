@@ -4,19 +4,25 @@ param(
 )
 
 $version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim()
-if ($version -notmatch '^\d+\.\d+\.\d+$') {
-    throw "VERSION must use MAJOR.MINOR.PATCH format; found '$version'."
+$versionMatch = [regex]::Match(
+    $version,
+    '^(?<numeric>\d+\.\d+\.\d+\.\d+)(?:-(?:alpha|beta))?$'
+)
+
+if (-not $versionMatch.Success) {
+    throw "VERSION must use MAJOR.MINOR.PATCH.REVISION with optional -alpha or -beta; found '$version'."
 }
 
-$assemblyVersion = "$version.0"
+$numericVersion = $versionMatch.Groups['numeric'].Value
+
 $source = @"
 using System.Reflection;
 [assembly: AssemblyTitle("Quing C++ Core")]
 [assembly: AssemblyProduct("Quing learn")]
 [assembly: AssemblyCompany("Quing")]
 [assembly: AssemblyDescription("Quing C++ Core local launcher")]
-[assembly: AssemblyVersion("$assemblyVersion")]
-[assembly: AssemblyFileVersion("$assemblyVersion")]
+[assembly: AssemblyVersion("$numericVersion")]
+[assembly: AssemblyFileVersion("$numericVersion")]
 [assembly: AssemblyInformationalVersion("$version")]
 "@
 
