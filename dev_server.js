@@ -7,8 +7,13 @@ const path = require("path");
 const os = require("os");
 const { exec, spawn } = require("child_process");
 
-const PORT = 8000;
+const PORT = Number.parseInt(process.env.QUING_PORT, 10) || 8000;
 const WORKSPACE_DIR = __dirname;
+const APP_VERSION = process.env.QUING_VERSION || (
+  fs.existsSync(path.join(WORKSPACE_DIR, "VERSION"))
+    ? fs.readFileSync(path.join(WORKSPACE_DIR, "VERSION"), "utf8").trim()
+    : "dev"
+);
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -130,6 +135,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({
         online: true,
+        appVersion: APP_VERSION,
         compiler: compilerInfo ? compilerInfo.name : null,
         compilerDisplay: compilerInfo ? compilerInfo.display : null,
         compilerVersion: compilerInfo ? compilerInfo.version : null,
@@ -514,7 +520,12 @@ const server = http.createServer((req, res) => {
     const ext = path.extname(safePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
-    res.writeHead(200, { "Content-Type": contentType });
+    res.writeHead(200, {
+      "Content-Type": contentType,
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0"
+    });
     fs.createReadStream(safePath).pipe(res);
   });
 });

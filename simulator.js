@@ -13,7 +13,8 @@ class CppSimulator {
 
     // 1. Attempt Native Execution via Companion Server
     try {
-      const resp = await fetch("http://localhost:8000/api/run-cpp", {
+      const apiBase = window.QuingApp && window.QuingApp.apiBase || "http://localhost:8000";
+      const resp = await fetch(apiBase + "/api/run-cpp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: sourceCode, stdin: inputString })

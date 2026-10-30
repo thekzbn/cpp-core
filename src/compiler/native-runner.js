@@ -21,7 +21,7 @@
           ? AbortSignal.timeout(20000)
           : undefined;
 
-      var resp = await fetch("http://localhost:8000/api/run-cpp", {
+      var resp = await fetch(window.QuingApp.apiBase + "/api/run-cpp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: source, stdin: stdin || "" }),

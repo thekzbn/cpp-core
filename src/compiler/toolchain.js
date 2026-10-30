@@ -37,7 +37,7 @@
   async function checkCompanionServer() {
     var compilerBadge = document.getElementById("compilerBadge");
     try {
-      var resp = await fetch("http://localhost:8000/api/system-status");
+      var resp = await fetch(window.QuingApp.apiBase + "/api/system-status");
       if (resp.ok) {
         var data = await resp.json();
 
@@ -107,7 +107,7 @@
     setupTerminalLog.textContent = "Starting " + title + "...\n";
 
     try {
-      var resp = await fetch("http://localhost:8000/api/setup/action", {
+      var resp = await fetch(window.QuingApp.apiBase + "/api/setup/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: actionName })
@@ -150,7 +150,7 @@
     if (!isApp || setupCompleted || !firstRunAppDialog) return;
 
     try {
-      var resp = await fetch("http://localhost:8000/api/system-status");
+      var resp = await fetch(window.QuingApp.apiBase + "/api/system-status");
       if (resp.ok) {
         var data = await resp.json();
 
@@ -190,7 +190,7 @@
     firstRunTerminalLog.textContent = "Starting " + title + "...\n";
 
     try {
-      var resp = await fetch("http://localhost:8000/api/setup/action", {
+      var resp = await fetch(window.QuingApp.apiBase + "/api/setup/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: actionName })
@@ -208,7 +208,7 @@
       firstRunTerminalStatus.textContent = "Completed";
       firstRunTerminalStatus.className = "terminal-status-success";
       checkCompanionServer();
-      var resp2 = await fetch("http://localhost:8000/api/system-status");
+      var resp2 = await fetch(window.QuingApp.apiBase + "/api/system-status");
       if (resp2.ok) {
         var d2 = await resp2.json();
         if (d2.compiler && firstRunCompilerActions) {

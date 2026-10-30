@@ -120,7 +120,7 @@
 
         // 1. Try companion server API first
         try {
-          var resp = await fetch("http://localhost:8000/api/open-vscode", {
+          var resp = await fetch(window.QuingApp.apiBase + "/api/open-vscode", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

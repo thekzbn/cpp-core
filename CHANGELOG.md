@@ -3,6 +3,15 @@
 User-facing changes for each release are recorded here. Versions use
 `MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
 
+## 0.1.4.3 - 2026-10-30
+
+### Fixed
+
+- Verify the companion server version and replace an older Quing server on port 8000 before opening the app, preserving the browser storage origin and preventing stale UI files from being served.
+- Identify the app version through the local server status endpoint and reuse only a matching server.
+- Disable browser caching for files served by the local companion server.
+- Include the modular `src/` files in the portable release archive.
+
 ## 0.1.4.2 - 2026-10-30
 
 ### Fixed

@@ -73,6 +73,7 @@ jobs:
 
           $appFiles = @(
             'index.html', 'style.css', 'app.js', 'lessons.js', 'simulator.js',
+            'src',
             'dev_server.js', 'dev_server.py',
             'start_server.bat', 'start_server.sh', 'stop_server.bat',
             'fonts'

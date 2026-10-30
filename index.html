@@ -2,6 +2,13 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
+  <script>
+    (function () {
+      var apiPort = new URLSearchParams(window.location.search).get("apiPort") || "8000";
+      window.QuingApp = window.QuingApp || {};
+      window.QuingApp.apiBase = "http://localhost:" + apiPort;
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>C++ Core || learn.quing</title>
   <!-- Quing Slate Typography: Inter Variable via rsms + JetBrains Mono -->

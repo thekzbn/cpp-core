@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
@@ -32,12 +33,33 @@ namespace Quing.Learn
 
             string serverScript = Path.Combine(baseDir, "dev_server.js");
             string nodeExe = Path.Combine(baseDir, "node.exe");
+            Version appVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            string versionText = appVersion != null ? appVersion.ToString() : "0.0.0.0";
+            int serverPort = 8000;
+            string serverUrl = "http://localhost:" + serverPort;
+            bool serverReady = IsServerForVersion(serverUrl + "/api/status", versionText);
 
-            // 1. Check if server is already responding
-            bool serverReady = IsServerResponding("http://localhost:8000/api/status");
-
+            // Replace an older Quing server on the normal origin to keep browser storage intact.
             if (!serverReady)
             {
+                if (!IsPortAvailable(serverPort))
+                {
+                    if (IsQuingServer(serverUrl + "/api/status"))
+                    {
+                        RequestServerShutdown(serverUrl + "/api/shutdown");
+                        for (int i = 0; i < 15 && !IsPortAvailable(serverPort); i++)
+                        {
+                            Thread.Sleep(200);
+                        }
+                    }
+
+                    if (!IsPortAvailable(serverPort))
+                    {
+                        serverPort = GetAvailablePort();
+                        serverUrl = "http://localhost:" + serverPort;
+                    }
+                }
+
                 ProcessStartInfo serverPsi = new ProcessStartInfo
                 {
                     FileName = nodeExe,
@@ -47,6 +69,8 @@ namespace Quing.Learn
                     CreateNoWindow = true,
                     WindowStyle = ProcessWindowStyle.Hidden
                 };
+                serverPsi.EnvironmentVariables["QUING_PORT"] = serverPort.ToString();
+                serverPsi.EnvironmentVariables["QUING_VERSION"] = versionText;
 
                 try
                 {
@@ -63,11 +87,11 @@ namespace Quing.Learn
                     return;
                 }
 
-                // Wait up to 6 seconds for server to be ready
+                // Wait up to 6 seconds for this launcher's server to be ready
                 for (int i = 0; i < 30; i++)
                 {
                     Thread.Sleep(200);
-                    if (IsServerResponding("http://localhost:8000/api/status"))
+                    if (IsServerForVersion(serverUrl + "/api/status", versionText))
                     {
                         serverReady = true;
                         break;
@@ -84,7 +108,7 @@ namespace Quing.Learn
                 ProcessStartInfo appPsi = new ProcessStartInfo
                 {
                     FileName = appBrowserPath,
-                    Arguments = "--app=\"http://localhost:8000/?app=1\" --window-size=1280,820",
+                    Arguments = "--app=\"" + serverUrl + "/?app=1&apiPort=" + serverPort + "\" --window-size=1280,820",
                     UseShellExecute = false
                 };
                 try
@@ -106,7 +130,7 @@ namespace Quing.Learn
                         Process.Start(new ProcessStartInfo
                         {
                             FileName = zenPath,
-                            Arguments = "-new-window \"http://localhost:8000/?app=1\"",
+                            Arguments = "-new-window \"" + serverUrl + "/?app=1&apiPort=" + serverPort + "\"",
                             UseShellExecute = false
                         });
                         launchedAppMode = true;
@@ -120,7 +144,7 @@ namespace Quing.Learn
             {
                 try
                 {
-                    Process.Start(new ProcessStartInfo("http://localhost:8000/?app=1") { UseShellExecute = true });
+                    Process.Start(new ProcessStartInfo(serverUrl + "/?app=1&apiPort=" + serverPort) { UseShellExecute = true });
                 }
                 catch (Exception ex)
                 {
@@ -302,21 +326,85 @@ namespace Quing.Learn
             return null;
         }
 
-        static bool IsServerResponding(string url)
+        static int GetAvailablePort()
+        {
+            TcpListener listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            return port;
+        }
+
+        static bool IsPortAvailable(int port)
+        {
+            TcpListener listener = new TcpListener(IPAddress.Loopback, port);
+            try
+            {
+                listener.Start();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                listener.Stop();
+            }
+        }
+
+        static bool IsServerForVersion(string url, string expectedVersion)
         {
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Timeout = 800;
-                request.Method = "GET";
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
                 {
-                    return response.StatusCode == HttpStatusCode.OK;
+                    return response.StatusCode == HttpStatusCode.OK &&
+                        reader.ReadToEnd().Contains("\"appVersion\":\"" + expectedVersion + "\"");
                 }
             }
             catch
             {
                 return false;
+            }
+        }
+
+        static bool IsQuingServer(string url)
+        {
+            try
+            {
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request.Timeout = 800;
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                {
+                    string status = reader.ReadToEnd();
+                    return response.StatusCode == HttpStatusCode.OK &&
+                        status.Contains("\"online\":true") &&
+                        status.Contains("\"compilerVersion\"");
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        static void RequestServerShutdown(string url)
+        {
+            try
+            {
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request.Method = "POST";
+                request.Timeout = 800;
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse()) {}
+            }
+            catch
+            {
+                // Older or non-Node companion servers may not support shutdown.
             }
         }
     }
