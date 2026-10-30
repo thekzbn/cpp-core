@@ -8,12 +8,71 @@ const os = require("os");
 const { exec, spawn } = require("child_process");
 
 const PORT = Number.parseInt(process.env.QUING_PORT, 10) || 8000;
+const HOST = process.env.QUING_HOST || "127.0.0.1";
 const WORKSPACE_DIR = __dirname;
 const APP_VERSION = process.env.QUING_VERSION || (
   fs.existsSync(path.join(WORKSPACE_DIR, "VERSION"))
     ? fs.readFileSync(path.join(WORKSPACE_DIR, "VERSION"), "utf8").trim()
     : "dev"
 );
+
+const MAX_PAYLOAD_SIZE = 512 * 1024; // 512 KB
+const MAX_OUTPUT_BUFFER = 512 * 1024; // 512 KB
+
+// Validate whether Host header points strictly to loopback
+function isLoopbackHost(hostHeader) {
+  if (!hostHeader) return false;
+  const hostWithoutPort = hostHeader.replace(/:\d+$/, "").toLowerCase();
+  return hostWithoutPort === "localhost" || hostWithoutPort === "127.0.0.1" || hostWithoutPort === "[::1]";
+}
+
+// Validate whether Origin header is an allowed loopback origin
+function isAllowedLoopbackOrigin(originHeader) {
+  if (!originHeader) return false;
+  try {
+    const parsed = new URL(originHeader);
+    const hostname = parsed.hostname.toLowerCase();
+    const isLoopback = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname === "[::1]";
+    return (parsed.protocol === "http:" || parsed.protocol === "https:") && isLoopback;
+  } catch (_) {
+    return false;
+  }
+}
+
+// Safely stream and parse JSON request body with size cap
+function readJsonBody(req, res, callback) {
+  let body = "";
+  let receivedBytes = 0;
+  let exceeded = false;
+
+  req.on("data", chunk => {
+    receivedBytes += chunk.length;
+    if (receivedBytes > MAX_PAYLOAD_SIZE && !exceeded) {
+      exceeded = true;
+      res.writeHead(413, {
+        "Content-Type": "application/json",
+        "Connection": "close"
+      });
+      res.end(JSON.stringify({ success: false, error: "Payload exceeds 512KB limit." }));
+      req.resume();
+      return;
+    }
+    if (!exceeded) {
+      body += chunk;
+    }
+  });
+
+  req.on("end", () => {
+    if (exceeded) return;
+    try {
+      const data = JSON.parse(body || "{}");
+      callback(null, data);
+    } catch (err) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ success: false, error: "Malformed JSON payload: " + err.message }));
+    }
+  });
+}
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -118,10 +177,30 @@ function detectCompiler(callback) {
 }
 
 const server = http.createServer((req, res) => {
-  // CORS Headers
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // 1. Host Header Validation (Prevent DNS rebinding)
+  if (!isLoopbackHost(req.headers.host)) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: false, error: "Bad Request: Invalid or foreign Host header." }));
+    return;
+  }
+
+  const origin = req.headers.origin;
+  const isLoopbackOrigin = isAllowedLoopbackOrigin(origin);
+
+  // 2. Reject foreign or null origins on mutating / API calls
+  if (origin && !isLoopbackOrigin) {
+    res.writeHead(403, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: false, error: "Forbidden: Cross-origin request denied." }));
+    return;
+  }
+
+  // 3. Set strict CORS headers only for allowed loopback origins
+  if (origin && isLoopbackOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  }
 
   if (req.method === "OPTIONS") {
     res.writeHead(200);
@@ -175,11 +254,9 @@ const server = http.createServer((req, res) => {
 
   // API Endpoint: Run Setup Actions (Streaming output with duplicate install protection)
   if (req.method === "POST" && req.url === "/api/setup/action") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", () => {
+    readJsonBody(req, res, (err, payload) => {
+      if (err) return;
       try {
-        const payload = JSON.parse(body || "{}");
         const action = payload.action;
 
         res.writeHead(200, {
@@ -322,11 +399,9 @@ const server = http.createServer((req, res) => {
 
   // API Endpoint: Compile & Run C++ Locally
   if (req.method === "POST" && req.url === "/api/run-cpp") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", () => {
+    readJsonBody(req, res, (err, payload) => {
+      if (err) return;
       try {
-        const payload = JSON.parse(body || "{}");
         const code = payload.code || "";
         const stdinData = payload.stdin || "";
 
@@ -380,16 +455,24 @@ const server = http.createServer((req, res) => {
               return;
             }
 
-            // Binary compiled successfully -> Execute with safety timeout
+            // Binary compiled successfully -> Execute with safety timeout and buffer limit
             const execStart = Date.now();
             const child = spawn(exePath, [], { windowsHide: true });
             let stdoutData = "";
             let stderrData = "";
             let timedOut = false;
+            let outputTruncated = false;
+
+            const terminateChild = () => {
+              if (process.platform === "win32") {
+                try { exec(`taskkill /pid ${child.pid} /T /F`, () => {}); } catch (_) {}
+              }
+              try { child.kill("SIGKILL"); } catch (_) {}
+            };
 
             const watchdog = setTimeout(() => {
               timedOut = true;
-              try { child.kill("SIGKILL"); } catch (e) {}
+              terminateChild();
             }, 8000);
 
             const formattedStdin = stdinData ? (stdinData.endsWith("\n") ? stdinData : stdinData + "\n") : "";
@@ -400,8 +483,29 @@ const server = http.createServer((req, res) => {
             }
             try { child.stdin.end(); } catch (e) {}
 
-            child.stdout.on("data", chunk => { stdoutData += chunk.toString(); });
-            child.stderr.on("data", chunk => { stderrData += chunk.toString(); });
+            child.stdout.on("data", chunk => {
+              if (stdoutData.length < MAX_OUTPUT_BUFFER) {
+                const remaining = MAX_OUTPUT_BUFFER - stdoutData.length;
+                stdoutData += chunk.toString("utf-8", 0, remaining);
+                if (stdoutData.length >= MAX_OUTPUT_BUFFER && !outputTruncated) {
+                  outputTruncated = true;
+                  stdoutData += "\n[Output truncated: maximum 512KB buffer reached]";
+                  terminateChild();
+                }
+              }
+            });
+
+            child.stderr.on("data", chunk => {
+              if (stderrData.length < MAX_OUTPUT_BUFFER) {
+                const remaining = MAX_OUTPUT_BUFFER - stderrData.length;
+                stderrData += chunk.toString("utf-8", 0, remaining);
+                if (stderrData.length >= MAX_OUTPUT_BUFFER && !outputTruncated) {
+                  outputTruncated = true;
+                  stderrData += "\n[Output truncated: maximum 512KB buffer reached]";
+                  terminateChild();
+                }
+              }
+            });
 
             child.on("close", (code) => {
               clearTimeout(watchdog);
@@ -454,23 +558,39 @@ const server = http.createServer((req, res) => {
 
   // API Endpoint: Open in VS Code
   if (req.method === "POST" && req.url === "/api/open-vscode") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", () => {
+    readJsonBody(req, res, (err, data) => {
+      if (err) return;
       try {
-        const data = JSON.parse(body);
         let rootDir = (data.rootDir || "").trim();
-        const fileName = (data.fileName || "main.cpp").trim();
+        const rawFileName = (data.fileName || "main.cpp").trim();
         const codeContent = data.code || "";
+
+        // Enforce strict basename without path traversal sequences
+        const fileName = path.basename(rawFileName);
+        if (!fileName || fileName === "." || fileName === ".." || fileName !== rawFileName) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: false, error: "Invalid filename: path traversal sequences are not permitted." }));
+          return;
+        }
 
         if (!rootDir) {
           const homeDir = process.env.USERPROFILE || process.env.HOME || "C:\\";
           rootDir = path.join(homeDir, "cpp_projects");
         }
 
+        const resolvedRoot = path.resolve(rootDir);
+        const targetPath = path.resolve(resolvedRoot, fileName);
+
+        // Strict containment check: targetPath must reside directly within resolvedRoot
+        const expectedDir = path.dirname(targetPath);
+        if (expectedDir !== resolvedRoot) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: false, error: "Target file path is outside the designated root directory." }));
+          return;
+        }
+
         // Ensure target directory exists
-        fs.mkdirSync(rootDir, { recursive: true });
-        const targetPath = path.join(rootDir, fileName);
+        fs.mkdirSync(resolvedRoot, { recursive: true });
 
         // Write source file to disk
         fs.writeFileSync(targetPath, codeContent, "utf-8");
@@ -499,13 +619,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Static File Serving
+  // Static File Serving with strict path containment
   let reqPath = req.url.split("?")[0];
   if (reqPath === "/") reqPath = "/index.html";
 
-  const safePath = path.normalize(path.join(WORKSPACE_DIR, reqPath));
-  if (!safePath.startsWith(WORKSPACE_DIR)) {
-    res.writeHead(403);
+  const normalizedWorkspace = path.resolve(WORKSPACE_DIR);
+  const safePath = path.resolve(WORKSPACE_DIR, "." + reqPath);
+  if (!safePath.startsWith(normalizedWorkspace + path.sep) && safePath !== normalizedWorkspace) {
+    res.writeHead(403, { "Content-Type": "text/plain" });
     res.end("Forbidden");
     return;
   }
@@ -530,11 +651,12 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
   console.log("===========================================================");
   console.log(` Quing learn (learn.quing) — C++ Core Companion Server`);
-  console.log(` http://localhost:${PORT}`);
+  console.log(` http://${HOST}:${PORT}`);
   console.log(` Native C++ compilation & VS Code sync active.`);
+  console.log(` Bound securely to loopback (${HOST}).`);
   console.log(` Press Ctrl+C to stop.`);
   console.log("===========================================================");
 });
