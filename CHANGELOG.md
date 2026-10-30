@@ -4,6 +4,20 @@ User-facing changes for each release are recorded here. Versions use
 `MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
 
 
+## 0.1.3.5 - 2026-10-30
+
+### Fixed
+
+- Fix simulator transpiler syntax errors caused by modern C++ uniform brace initialization (`Type var{val};`, `Type var{};`), `std::` namespacing, `std::cerr`, and brace-initialized `stringstream`/`out_of_range`. All 58 lessons now execute cleanly in browser simulation mode without `Unexpected token '{'` runtime errors.
+- Cleanly route interactive `cin` and `getline` lessons through the native GCC companion server first, gracefully falling back to browser simulation only when the server is offline.
+- Fix execution syntax error in `app.js` and eliminate duplicate block closures.
+
+### Changed
+
+- Consolidate navigation header controls: remove color swatch picker strip, serif/sans toggle, and workspace text button from the top bar into a single, unified Settings gear button.
+- Integrate Appearance & Typography (theme swatches, Sans/Serif reading mode) directly inside the Preferences & Workspace Settings dialog for a clean, deliberate interface following Quing `slate` design principles.
+
+
 ## 0.1.3.0 - 2026-10-30
 
 ### Fixed

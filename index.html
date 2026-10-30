@@ -43,32 +43,16 @@
     </div>
 
     <div class="header-right">
-      <div class="color-picker-strip" id="colorPickerStrip" title="Select Accent Theme Color" role="radiogroup" aria-label="Accent theme color">
-        <!-- Rendered swatches with Quing Slate neutral and accents -->
-        <button class="color-swatch-btn" data-color="slate" title="Quing Slate" aria-label="Quing Slate" style="--swatch-color: var(--end);"></button>
-        <button class="color-swatch-btn active" data-color="dodgerblue" title="Dodger Blue" aria-label="Dodger Blue" style="--swatch-color: #1e90ff;"></button>
-        <button class="color-swatch-btn" data-color="tomato" title="Tomato" aria-label="Tomato" style="--swatch-color: #ff6347;"></button>
-        <button class="color-swatch-btn" data-color="mediumseagreen" title="Medium Sea Green" aria-label="Medium Sea Green" style="--swatch-color: #3cb371;"></button>
-        <button class="color-swatch-btn" data-color="emerald" title="Emerald" aria-label="Emerald" style="--swatch-color: #10b981;"></button>
-        <button class="color-swatch-btn" data-color="violet" title="Violet" aria-label="Violet" style="--swatch-color: #8b5cf6;"></button>
-        <button class="color-swatch-btn" data-color="amber" title="Amber" aria-label="Amber" style="--swatch-color: #f59e0b;"></button>
-        <button class="color-swatch-btn" data-color="cyan" title="Cyan" aria-label="Cyan" style="--swatch-color: #06b6d4;"></button>
-      </div>
-
-      <button id="readingFontToggleBtn" class="action-btn text-btn" title="Toggle article reading typography: Sans (Inter) / Serif (Merriweather)">
-        <span id="readingFontLabel">Serif</span>
-      </button>
-
-      <button id="workspaceSettingsBtn" class="action-btn text-btn" title="Configure local C++ root folder & VS Code settings">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-7l-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
-        <span>Workspace</span>
-      </button>
-
       <button id="themeToggleBtn" class="icon-button" aria-label="Toggle Dark and Light Mode" title="Toggle Light/Dark Theme">
         <!-- Sun icon (shown in dark mode) -->
         <svg class="theme-icon sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         <!-- Moon icon (shown in light mode) -->
         <svg class="theme-icon moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+
+      <!-- Settings (gear) — opens unified settings/workspace dialog -->
+      <button id="workspaceSettingsBtn" class="icon-button" aria-label="Open Settings" title="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
 
       <!-- Mobile Settings Menu Toggle (collapsed on small screens) -->
@@ -82,12 +66,36 @@
   <dialog id="workspaceDialog" class="settings-dialog">
     <div class="dialog-content">
       <div class="dialog-header">
-        <h2>C++ Workspace Configuration</h2>
+        <h2>Preferences &amp; Workspace Settings</h2>
         <button id="closeDialogBtn" class="icon-button" aria-label="Close dialog">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
-      
+
+      <div class="form-group" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+        <label>Appearance &amp; Typography</label>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem;">
+          <div class="color-picker-strip" id="colorPickerStrip" title="Select Accent Theme Color" role="radiogroup" aria-label="Accent theme color">
+            <!-- Rendered swatches with Quing Slate neutral and accents -->
+            <button class="color-swatch-btn" data-color="slate" title="Quing Slate" aria-label="Quing Slate" style="--swatch-color: var(--end);"></button>
+            <button class="color-swatch-btn active" data-color="dodgerblue" title="Dodger Blue" aria-label="Dodger Blue" style="--swatch-color: #1e90ff;"></button>
+            <button class="color-swatch-btn" data-color="tomato" title="Tomato" aria-label="Tomato" style="--swatch-color: #ff6347;"></button>
+            <button class="color-swatch-btn" data-color="mediumseagreen" title="Medium Sea Green" aria-label="Medium Sea Green" style="--swatch-color: #3cb371;"></button>
+            <button class="color-swatch-btn" data-color="emerald" title="Emerald" aria-label="Emerald" style="--swatch-color: #10b981;"></button>
+            <button class="color-swatch-btn" data-color="violet" title="Violet" aria-label="Violet" style="--swatch-color: #8b5cf6;"></button>
+            <button class="color-swatch-btn" data-color="amber" title="Amber" aria-label="Amber" style="--swatch-color: #f59e0b;"></button>
+            <button class="color-swatch-btn" data-color="cyan" title="Cyan" aria-label="Cyan" style="--swatch-color: #06b6d4;"></button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.82rem; color: var(--text-secondary);">Article Font:</span>
+            <button id="readingFontToggleBtn" class="action-btn text-btn" title="Toggle article reading typography: Sans (Inter) / Serif (Merriweather)">
+              <span id="readingFontLabel">Serif</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <p class="dialog-desc">Set your local folder where C++ projects and lesson code files will be stored. When you click "Open in VS Code", files are saved directly into this folder without touching your Downloads folder.</p>
 
       <div class="form-group">

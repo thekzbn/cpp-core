@@ -755,78 +755,71 @@ document.addEventListener("DOMContentLoaded", () => {
     interactiveOutput = "";
 
     try {
-      // --- Attempt 1: Native GCC server (always preferred, supports stdin too) ---
-      let nativeRes = null;
+      // --- Attempt 1: Native GCC server (always first, incl. cin/getline lessons) ---
+      let nativeData = null;
+      let serverOnline = false;
       try {
+        const signal = (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function")
+          ? AbortSignal.timeout(20000) : undefined;
         const resp = await fetch("http://localhost:8000/api/run-cpp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code: source, stdin: stdin }),
-          signal: AbortSignal.timeout(20000)
+          signal: signal
         });
-
         if (resp.ok) {
-          nativeRes = await resp.json();
+          nativeData = await resp.json();
+          serverOnline = true;
         }
-      } catch (networkErr) {
+      } catch (_) {
         // Server offline — fall through to simulator
       }
 
-      // Server responded — use native result
-      if (nativeRes !== null) {
-        if (!nativeRes.compilerFound) {
-          // Server is up but no compiler installed — show warning badge, fall through to simulator
-          if (compilerBadge) {
-            compilerBadge.textContent = "No Compiler on PATH";
-            compilerBadge.className = "compiler-badge mode-warn";
-          }
-        } else {
-          // Native execution succeeded or failed with a real compile/runtime error
-          const outputText = nativeRes.output || "";
-          const duration = nativeRes.durationMs != null ? ` (${nativeRes.durationMs} ms)` : "";
-          const compilerLabel = nativeRes.compiler
-            ? nativeRes.compiler.replace(/^"(.+)"$/, "$1").split(/[\\/]/).pop().replace(/\.exe$/i, "")
+      if (serverOnline && nativeData) {
+        if (nativeData.compilerFound) {
+          const duration = nativeData.durationMs != null ? ' (' + nativeData.durationMs + ' ms)' : '';
+          const compilerLabel = nativeData.compiler
+            ? nativeData.compiler.replace(/^"(.+)"$/, "$1").split(/[\/\\]/).pop().replace(/\.exe$/i, "")
             : "GCC";
 
-          let finalOutput = outputText;
-          if (nativeRes.compiled && !nativeRes.success && nativeRes.exitCode === 124) {
-            finalOutput += "\n[Process terminated: Execution exceeded safety limit (8s)]";
+          let finalOutput = nativeData.output || "";
+          if (!nativeData.compiled) {
+            finalOutput = 'Compilation error (' + compilerLabel + '):\n' + finalOutput + '\n\n--------------------------------\nProcess terminated with exit code ' + (nativeData.exitCode ?? 1) + '.';
+          } else {
+            if (!finalOutput.endsWith("\n") && finalOutput.length > 0) finalOutput += "\n";
+            if (nativeData.exitCode === 124) finalOutput += "[Process terminated: Execution exceeded safety limit (8s)]\n";
+            finalOutput += '\n--------------------------------\nProcess finished with exit code ' + (nativeData.exitCode ?? 0) + duration;
           }
-          if (nativeRes.compiled && nativeRes.success) {
-            finalOutput += `\n--------------------------------\nProcess finished with exit code 0${duration}`;
-          } else if (nativeRes.compiled && !nativeRes.success) {
-            finalOutput += `\n--------------------------------\nProcess finished with exit code ${nativeRes.exitCode ?? 1}${duration}`;
-          }
+
           setTerminalOutput(finalOutput);
-
-          terminalStatus.textContent = nativeRes.success ? "Success" : "Error";
-          terminalStatus.className = nativeRes.success ? "terminal-status-success" : "terminal-status-idle";
-
+          terminalStatus.textContent = nativeData.success ? "Success" : "Error";
+          terminalStatus.className = nativeData.success ? "terminal-status-success" : "terminal-status-idle";
           if (compilerBadge) {
-            compilerBadge.textContent = `Native ${compilerLabel}`;
+            compilerBadge.textContent = 'Native ' + compilerLabel;
             compilerBadge.className = "compiler-badge mode-native";
           }
-          return; // Done — native path handled it
+          return;
+        }
+        // Server up but no compiler installed
+        if (compilerBadge) {
+          compilerBadge.textContent = "No Compiler on PATH";
+          compilerBadge.className = "compiler-badge mode-warn";
         }
       }
 
-      // --- Fallback: Browser Simulator (server offline or no compiler found) ---
-      let res;
-      if (needsInput) {
-        // Interactive simulator mode: prompt for input line-by-line
+      // --- Fallback: Browser Simulator ---
+      // Use interactive (prompt-by-prompt) only when server is fully offline AND code has cin.
+      // If server online but no compiler, runAsync shows the notice and uses JS sim.
+      if (needsInput && !serverOnline) {
         interactiveOutput = "[Mode: Browser Simulation | Interactive input]\n\n";
         setTerminalOutput(interactiveOutput);
-
         if (compilerBadge) {
           compilerBadge.textContent = "Simulator";
           compilerBadge.className = "compiler-badge mode-sim";
         }
         const startTime = performance.now();
-        res = await window.cppSimulator.runInteractive(source, stdin, {
-          onOutput: (text) => {
-            interactiveOutput += text;
-            setTerminalOutput(interactiveOutput);
-          },
+        const res = await window.cppSimulator.runInteractive(source, stdin, {
+          onOutput: (text) => { interactiveOutput += text; setTerminalOutput(interactiveOutput); },
           requestInput: () => new Promise(resolve => {
             pendingTerminalInput = resolve;
             terminalInputForm.hidden = false;
@@ -837,33 +830,33 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         terminalInputForm.hidden = true;
         if (res.success) {
-          interactiveOutput += `\n--------------------------------\nProcess finished with exit code 0 (${(performance.now() - startTime).toFixed(2)} ms)`;
+          interactiveOutput += '\n--------------------------------\nProcess finished with exit code 0 (' + (performance.now() - startTime).toFixed(2) + ' ms)';
         } else {
-          interactiveOutput += `\nRuntime error: ${res.error}\nProcess terminated with exit code 1.`;
+          interactiveOutput += '\nRuntime error: ' + res.error + '\nProcess terminated with exit code 1.';
         }
         setTerminalOutput(interactiveOutput);
+        terminalStatus.textContent = res.success ? "Success" : "Error";
+        terminalStatus.className = res.success ? "terminal-status-success" : "terminal-status-idle";
       } else {
-        res = await window.cppSimulator.runAsync(source, stdin);
+        const res = await window.cppSimulator.runAsync(source, stdin);
         setTerminalOutput(res.output);
-      }
-
-      terminalStatus.textContent = res.success ? "Success" : "Error";
-      terminalStatus.className = res.success ? "terminal-status-success" : "terminal-status-idle";
-
-      if (compilerBadge) {
-        if (res.engine === "native") {
-          compilerBadge.textContent = "Native " + (res.compiler || "GCC");
-          compilerBadge.className = "compiler-badge mode-native";
-        } else if (res.engine === "fallback-no-compiler") {
-          compilerBadge.textContent = "No Compiler on PATH";
-          compilerBadge.className = "compiler-badge mode-warn";
-        } else {
-          compilerBadge.textContent = "Simulator";
-          compilerBadge.className = "compiler-badge mode-sim";
+        terminalStatus.textContent = res.success ? "Success" : "Error";
+        terminalStatus.className = res.success ? "terminal-status-success" : "terminal-status-idle";
+        if (compilerBadge) {
+          if (res.engine === "native") {
+            compilerBadge.textContent = "Native " + (res.compiler || "GCC");
+            compilerBadge.className = "compiler-badge mode-native";
+          } else if (res.engine === "fallback-no-compiler") {
+            compilerBadge.textContent = "No Compiler on PATH";
+            compilerBadge.className = "compiler-badge mode-warn";
+          } else {
+            compilerBadge.textContent = "Simulator";
+            compilerBadge.className = "compiler-badge mode-sim";
+          }
         }
       }
     } catch (err) {
-      setTerminalOutput(`Execution Error:\n${err.message}`);
+      setTerminalOutput('Execution Error:\n' + err.message);
       terminalStatus.textContent = "Error";
       terminalStatus.className = "terminal-status-idle";
     } finally {

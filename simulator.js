@@ -298,7 +298,12 @@ class CppSimulator {
       return statements;
     });
     const stringVariableNames = new Set(
-      Array.from(code.matchAll(/\bstring\s+([a-zA-Z_]\w*)/g), match => match[1])
+      Array.from(code.matchAll(/\b(?:std::)?string\s+([^;]+);/g), match => {
+        return match[1].split(',').map(s => {
+          const m = s.match(/([a-zA-Z_]\w*)/);
+          return m ? m[1] : null;
+        }).filter(Boolean);
+      }).flat()
     );
     let inMain = false;
     let mainBraceDepth = 0;
@@ -362,6 +367,34 @@ class CppSimulator {
         let line = lines[i].trim();
         if (!line) continue;
 
+        // Normalize std:: and cerr
+        line = line.replace(/\bstd::/g, "").replace(/\bcerr\b/g, "cout");
+
+        // Uniform initialization: Type var{val}; or Type var{}; or comma-separated
+        const typeDeclMatch = line.match(/^(\s*)(const\s+)?(string|int|double|float|char|bool|auto)\s+(.+);$/);
+        if (typeDeclMatch) {
+          const [, indent, constPrefix, typeName, rest] = typeDeclMatch;
+          const isConst = Boolean(constPrefix);
+          const kw = isConst ? "const" : "let";
+          const isStr = typeName === "string";
+          const isBool = typeName === "bool";
+          const defVal = isStr ? '""' : (isBool ? "false" : "0");
+          const parts = rest.split(/\s*,\s*/);
+          const convParts = parts.map(part => {
+            const bMatch = part.match(/^([a-zA-Z_]\w*)\s*\{([^}]*)\}$/);
+            if (bMatch) {
+              const val = bMatch[2].trim();
+              return bMatch[1] + " = " + (val === "" ? defVal : val);
+            }
+            if (part.includes("=")) return part;
+            const bare = part.match(/^([a-zA-Z_]\w*)$/);
+            if (bare) return bare[1] + " = " + defVal;
+            return part;
+          });
+          out.push(indent + kw + " " + convParts.join(", ") + ";");
+          continue;
+        }
+
         // Skip return 0 in main
         if (line.startsWith("return 0;")) continue;
 
@@ -384,7 +417,7 @@ class CppSimulator {
           continue;
         }
 
-        const stringStreamMatch = line.match(/^stringstream\s+([a-zA-Z_]\w*)\s*\(\s*([a-zA-Z_]\w*)\s*\)\s*;$/);
+        const stringStreamMatch = line.match(/^stringstream\s+([a-zA-Z_]\w*)\s*[({]\s*([a-zA-Z_]\w*)\s*[)}]\s*;$/);
         if (stringStreamMatch) {
           out.push(`let ${stringStreamMatch[1]} = __makeStringStream(${stringStreamMatch[2]});`);
           continue;
@@ -451,7 +484,7 @@ class CppSimulator {
         // Convert typed for-loop declarations, casts, and C++ exception syntax.
         line = line.replace(/^(\s*for\s*\(\s*)(?:int|double|float|char|auto)\s+/, "$1let ")
           .replace(/catch\s*\(\s*const\s+[\w:]+\s*&\s*([a-zA-Z_]\w*)\s*\)/, "catch ($1)")
-          .replace(/throw\s+out_of_range\s*\(/, "throw new Error(")
+          .replace(/throw\s+out_of_range\s*[({]([^)}]+)[)}]\s*;?/, "throw new Error($1);")
           .replace(/([a-zA-Z_]\w*)\.compare\s*\(/g, "__compare($1, ")
           .replace(/\.what\(\)/g, ".message")
           .replace(/static_cast\s*<\s*int\s*>\s*\(([^()]*)\)\s*\/\s*([0-9]+)/g, "Math.trunc(Number($1) / $2)")
