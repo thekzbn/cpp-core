@@ -60,13 +60,16 @@
           label +
           "):\n" +
           text +
+          "\nReview the compiler diagnostics, fix the reported source line, and run again." +
           "\n\n--------------------------------\nProcess terminated with exit code " +
           (data.exitCode ?? 1) +
           ".";
       } else {
         if (!text.endsWith("\n") && text.length > 0) text += "\n";
         if (data.exitCode === 124) {
-          text += "[Process terminated: Execution exceeded safety limit (8s)]\n";
+          text += "[Watchdog timeout: execution exceeded the 8-second safety limit.]\nReduce or bound loops and retry with smaller input.\n";
+        } else if (data.exitCode !== 0) {
+          text += "[Runtime error: program exited unsuccessfully.]\nCheck the failing input and runtime conditions, then try again.\n";
         }
         text +=
           "\n--------------------------------\nProcess finished with exit code " +

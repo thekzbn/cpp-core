@@ -115,13 +115,13 @@
       if (!shouldUseInteractiveSimulator) {
         nativeRes = await window.QuingApp.nativeRunner.run(source, stdin);
         if (nativeRes.serverOnline && nativeRes.compilerFound) {
-          setTerminalOutput(nativeRes.output);
+          setTerminalOutput("[Mode: Native GCC Compilation]\n\n" + nativeRes.output);
           if (terminalStatus) {
             terminalStatus.textContent = nativeRes.success ? "Success" : "Error";
             terminalStatus.className = nativeRes.success ? "terminal-status-success" : "terminal-status-idle";
           }
           if (compilerBadge) {
-            compilerBadge.textContent = "Native " + nativeRes.compilerLabel;
+            compilerBadge.textContent = /^clang/i.test(nativeRes.compilerLabel) ? "Native Clang++" : "Native GCC (" + nativeRes.compilerLabel + ")";
             compilerBadge.className = "compiler-badge mode-native";
           }
           return;
@@ -134,10 +134,10 @@
 
       // 2. Browser Simulator fallback
       if (shouldUseInteractiveSimulator || (needsInput && (!nativeRes.serverOnline || !nativeRes.compilerFound))) {
-        interactiveOutput = "[Mode: Browser Simulation | Interactive input]\n\n";
+        interactiveOutput = "[Mode: Interactive Browser Simulation]\nNotice: Running in browser simulator for interactive console prompts.\nTo compile natively with GCC/Clang, pre-fill your input in the Stdin box below.\n\n";
         setTerminalOutput(interactiveOutput);
         if (compilerBadge) {
-          compilerBadge.textContent = "Simulator";
+          compilerBadge.textContent = "Simulator (Interactive Prompt)";
           compilerBadge.className = "compiler-badge mode-sim";
         }
         var startTime = performance.now();
@@ -167,7 +167,7 @@
             " ms)";
         } else {
           interactiveOutput +=
-            "\nRuntime error: " + res.error + "\nProcess terminated with exit code 1.";
+            "\nBrowser simulator limitation or runtime error: " + res.error + "\nTry simplifying the program to supported C++ constructs, or pre-fill Stdin and run with a local compiler.\nProcess terminated with exit code 1.";
         }
         setTerminalOutput(interactiveOutput);
         if (terminalStatus) {
@@ -175,41 +175,7 @@
           terminalStatus.className = res.success ? "terminal-status-success" : "terminal-status-idle";
         }
       } else {
-        var runRes = shouldUseInteractiveSimulator
-          ? await window.cppSimulator.runInteractive(source, stdin, {
-              onOutput: function (text) {
-                interactiveOutput += text;
-                setTerminalOutput(interactiveOutput);
-              },
-              requestInput: function () {
-                return new Promise(function (resolve) {
-                  pendingTerminalInput = resolve;
-                  if (terminalInputForm) terminalInputForm.hidden = false;
-                  if (terminalStatus) {
-                    terminalStatus.textContent = "Waiting for input";
-                    terminalStatus.className = "terminal-status-running";
-                  }
-                  if (terminalInput) terminalInput.focus();
-                });
-              }
-            })
-          : await window.cppSimulator.runAsync(source, stdin);
-        if (shouldUseInteractiveSimulator) {
-          if (terminalInputForm) terminalInputForm.hidden = true;
-          interactiveOutput += runRes.success
-            ? "\n--------------------------------\nProcess finished with exit code 0"
-            : "\nRuntime error: " + runRes.error + "\nProcess terminated with exit code 1.";
-          setTerminalOutput(interactiveOutput);
-          if (terminalStatus) {
-            terminalStatus.textContent = runRes.success ? "Success" : "Error";
-            terminalStatus.className = runRes.success ? "terminal-status-success" : "terminal-status-idle";
-          }
-          if (compilerBadge) {
-            compilerBadge.textContent = "Simulator";
-            compilerBadge.className = "compiler-badge mode-sim";
-          }
-          return;
-        }
+        var runRes = await window.cppSimulator.runAsync(source, stdin);
         setTerminalOutput(runRes.output);
         if (terminalStatus) {
           terminalStatus.textContent = runRes.success ? "Success" : "Error";
@@ -217,19 +183,19 @@
         }
         if (compilerBadge) {
           if (runRes.engine === "native") {
-            compilerBadge.textContent = "Native " + (runRes.compiler || "GCC");
+            compilerBadge.textContent = /^clang/i.test(runRes.compiler || "") ? "Native Clang++" : "Native GCC (" + (runRes.compiler || "GCC") + ")";
             compilerBadge.className = "compiler-badge mode-native";
           } else if (runRes.engine === "fallback-no-compiler") {
             compilerBadge.textContent = "No Compiler on PATH";
             compilerBadge.className = "compiler-badge mode-warn";
           } else {
-            compilerBadge.textContent = "Simulator";
+            compilerBadge.textContent = "Browser Simulator (Offline / Limited)";
             compilerBadge.className = "compiler-badge mode-sim";
           }
         }
       }
     } catch (err) {
-      setTerminalOutput("Execution Error:\n" + err.message);
+      setTerminalOutput("Execution error: " + err.message + "\nCheck the code and try again. If the browser simulator cannot run this C++ feature, use the local companion server and compiler.");
       if (terminalStatus) {
         terminalStatus.textContent = "Error";
         terminalStatus.className = "terminal-status-idle";
