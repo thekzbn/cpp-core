@@ -4,6 +4,24 @@ User-facing changes for each release are recorded here. Versions use
 `MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
 
 
+## 0.1.4.0 - 2026-10-30
+
+### Refactored
+
+- Decomposed the monolithic `app.js` controller into a clean modular subsystem architecture under `src/`:
+  - `src/core/storage.js`: Workspace root, completed lessons state, and persistent preferences.
+  - `src/core/theme.js`: Dark/light themes, multi-accent palette, and dynamic Merriweather font loading.
+  - `src/compiler/native-runner.js`: Companion server communication and native GCC/Clang execution engine.
+  - `src/compiler/toolchain.js`: Toolchain diagnostics, compiler detection, and automated 1-click installers.
+  - `src/ui/terminal.js`: ANSI terminal escape parser, status indicators, and interactive stdin stream handling.
+  - `src/ui/editor.js`: Gutter line numbering synchronization, tab indentation, and clipboard helpers.
+  - `src/ui/navigation.js`: Sidebar tree rendering, full-text & code search indexing, and curriculum progress.
+  - `src/ui/drills.js`: Interactive fill-in-the-blank exercises and conceptual quizzes.
+  - `src/ui/dialogs.js`: Unified workspace settings modal, direct folder binding, VS Code integration, and mobile drawer.
+- Reduced `app.js` to a concise entry point orchestrator (<25 lines).
+- Updated desktop packaging (`launcher.cs` and `build_launcher.ps1`) to package and extract the modular subsystems into the native executable.
+
+
 ## 0.1.3.5 - 2026-10-30
 
 ### Fixed

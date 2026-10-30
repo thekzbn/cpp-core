@@ -24,6 +24,15 @@ $payloadFiles = @(
     @{ Path = 'app.js'; Name = 'payload.app.js' },
     @{ Path = 'lessons.js'; Name = 'payload.lessons.js' },
     @{ Path = 'simulator.js'; Name = 'payload.simulator.js' },
+    @{ Path = 'src/core/storage.js'; Name = 'payload.src.core.storage.js' },
+    @{ Path = 'src/core/theme.js'; Name = 'payload.src.core.theme.js' },
+    @{ Path = 'src/compiler/native-runner.js'; Name = 'payload.src.compiler.native-runner.js' },
+    @{ Path = 'src/compiler/toolchain.js'; Name = 'payload.src.compiler.toolchain.js' },
+    @{ Path = 'src/ui/terminal.js'; Name = 'payload.src.ui.terminal.js' },
+    @{ Path = 'src/ui/editor.js'; Name = 'payload.src.ui.editor.js' },
+    @{ Path = 'src/ui/drills.js'; Name = 'payload.src.ui.drills.js' },
+    @{ Path = 'src/ui/dialogs.js'; Name = 'payload.src.ui.dialogs.js' },
+    @{ Path = 'src/ui/navigation.js'; Name = 'payload.src.ui.navigation.js' },
     @{ Path = 'dev_server.js'; Name = 'payload.dev_server.js' },
     @{ Path = $NodePath; Name = 'payload.node.exe' }
 )
