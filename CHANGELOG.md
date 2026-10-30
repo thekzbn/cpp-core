@@ -3,6 +3,18 @@
 User-facing changes for each release are recorded here. Versions use
 `MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
 
+## 0.1.5.0 - 2026-10-30
+
+### Added
+
+- Add automated curriculum and launcher manifest integrity checks to `node tests/run.js`, covering all 58 lessons, quizzes, exercise tokens, HTML assets, script order, and packaged files.
+- Clarify native GCC/Clang and browser simulator execution modes, including a notice when interactive `cin` prompts route to the browser simulator.
+
+### Fixed
+
+- Complete three unanswered fill-in-the-blank exercise solutions so the pointer, multiplication, and reference exercises can be completed.
+- Add actionable guidance for native compile errors, runtime failures, watchdog timeouts, and unsupported simulator behavior.
+
 ## 0.1.4.3 - 2026-10-30
 
 ### Fixed
