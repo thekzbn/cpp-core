@@ -75,6 +75,21 @@ User-facing changes for each release are recorded here. Versions use
 
 
 
+## 0.1.1.7-beta - 2026-10-26
+
+### Fixed
+
+- Rebuilt build launcher so action runs properly.
+
+
+## 0.1.1.5-beta - 2026-10-26
+
+### Added
+
+- Extend browser simulator support for common C++ stream, file, string, and loop patterns.
+- Add an interactive BankAccount flow for deposits, withdrawals, balance checks, and exit.
+
+
 ## 0.1.1 - 2026-10-25
 
 ### Added
@@ -100,16 +115,3 @@ User-facing changes for each release are recorded here. Versions use
 
 - Correct lesson content string boundaries so JavaScript loads the curriculum
   and renders the lesson navigation.
-
-## 0.1.1.5-beta - 2026-10-26
-
-### Added
-
-- Extend browser simulator support for common C++ stream, file, string, and loop patterns.
-- Add an interactive BankAccount flow for deposits, withdrawals, balance checks, and exit.
-
-## 0.1.1.7-beta - 2026-10-26
-
-### Fixed
-
-- Rebuilt build launcher so action runs properly
