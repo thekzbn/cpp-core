@@ -3,6 +3,13 @@
 User-facing changes for each release are recorded here. Versions use
 `MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
 
+## 0.1.4.2 - 2026-10-30
+
+### Fixed
+
+- Make the browser simulator request interactive terminal input when native C++ execution is unavailable, including when the companion server is online without a compiler.
+- Preserve line input behavior after `cin >>` consumes a token from the provided standard input stream.
+
 
 ## 0.1.4.0 - 2026-10-30
 

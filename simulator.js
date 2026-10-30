@@ -8,7 +8,7 @@ class CppSimulator {
   }
 
   // Asynchronous execution prioritizing the Local Companion Server (Option 2)
-  async runAsync(sourceCode, inputString = "") {
+  async runAsync(sourceCode, inputString = "", callbacks = {}) {
     const startTime = performance.now();
 
     // 1. Attempt Native Execution via Companion Server
@@ -50,6 +50,15 @@ class CppSimulator {
 
         // Case B: Companion server is running, but no g++ or clang++ found on PATH
         if (data.compilerFound === false) {
+          if (typeof callbacks.requestInput === "function") {
+            const interactive = await this.runInteractive(sourceCode, inputString, callbacks);
+            return {
+              success: interactive.success,
+              engine: "simulation",
+              output: "[Mode: Browser Simulation | Interactive input]\n\n" +
+                (interactive.output || (interactive.success ? "" : `Runtime error: ${interactive.error}`))
+            };
+          }
           const fallback = this.run(sourceCode, inputString);
           return {
             success: fallback.success,
@@ -97,8 +106,8 @@ class CppSimulator {
   async runInteractive(sourceCode, inputString = "", callbacks = {}) {
     this.outputBuffer = [];
     try {
-      await this.executeCpp(sourceCode, inputString, callbacks);
-      return { success: true };
+      const output = await this.executeCpp(sourceCode, inputString, callbacks);
+      return { success: true, output: output || "" };
     } catch (err) {
       return { success: false, error: err.message };
     }
@@ -190,13 +199,8 @@ class CppSimulator {
     };
     const readLineInteractive = async () => {
       while (streamPos >= streamBuffer.length && interactive) await requestMoreInput();
-      if (streamPos >= streamBuffer.length) return "";
       let start = streamPos;
       let nextNl = streamBuffer.indexOf("\n", start);
-      while (nextNl === -1 && interactive) {
-        await requestMoreInput();
-        nextNl = streamBuffer.indexOf("\n", start);
-      }
       if (nextNl === -1) {
         streamPos = streamBuffer.length;
         return streamBuffer.substring(start).replace(/\r$/, "");

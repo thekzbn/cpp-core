@@ -108,11 +108,13 @@
     interactiveOutput = "";
 
     try {
-      // 1. Try Native GCC Server first
-      var nativeRes = await window.QuingApp.nativeRunner.run(source, stdin);
+      var nativeRes = { serverOnline: false, compilerFound: false };
+      var shouldUseInteractiveSimulator = needsInput && !stdin.trim();
 
-      if (nativeRes.serverOnline) {
-        if (nativeRes.compilerFound) {
+      // Native execution is non-interactive. Use it when input was supplied in the stream.
+      if (!shouldUseInteractiveSimulator) {
+        nativeRes = await window.QuingApp.nativeRunner.run(source, stdin);
+        if (nativeRes.serverOnline && nativeRes.compilerFound) {
           setTerminalOutput(nativeRes.output);
           if (terminalStatus) {
             terminalStatus.textContent = nativeRes.success ? "Success" : "Error";
@@ -124,14 +126,14 @@
           }
           return;
         }
-        if (compilerBadge) {
+        if (nativeRes.serverOnline && !nativeRes.compilerFound && compilerBadge) {
           compilerBadge.textContent = "No Compiler on PATH";
           compilerBadge.className = "compiler-badge mode-warn";
         }
       }
 
       // 2. Browser Simulator fallback
-      if (needsInput && !nativeRes.serverOnline) {
+      if (shouldUseInteractiveSimulator || (needsInput && (!nativeRes.serverOnline || !nativeRes.compilerFound))) {
         interactiveOutput = "[Mode: Browser Simulation | Interactive input]\n\n";
         setTerminalOutput(interactiveOutput);
         if (compilerBadge) {
@@ -173,7 +175,41 @@
           terminalStatus.className = res.success ? "terminal-status-success" : "terminal-status-idle";
         }
       } else {
-        var runRes = await window.cppSimulator.runAsync(source, stdin);
+        var runRes = shouldUseInteractiveSimulator
+          ? await window.cppSimulator.runInteractive(source, stdin, {
+              onOutput: function (text) {
+                interactiveOutput += text;
+                setTerminalOutput(interactiveOutput);
+              },
+              requestInput: function () {
+                return new Promise(function (resolve) {
+                  pendingTerminalInput = resolve;
+                  if (terminalInputForm) terminalInputForm.hidden = false;
+                  if (terminalStatus) {
+                    terminalStatus.textContent = "Waiting for input";
+                    terminalStatus.className = "terminal-status-running";
+                  }
+                  if (terminalInput) terminalInput.focus();
+                });
+              }
+            })
+          : await window.cppSimulator.runAsync(source, stdin);
+        if (shouldUseInteractiveSimulator) {
+          if (terminalInputForm) terminalInputForm.hidden = true;
+          interactiveOutput += runRes.success
+            ? "\n--------------------------------\nProcess finished with exit code 0"
+            : "\nRuntime error: " + runRes.error + "\nProcess terminated with exit code 1.";
+          setTerminalOutput(interactiveOutput);
+          if (terminalStatus) {
+            terminalStatus.textContent = runRes.success ? "Success" : "Error";
+            terminalStatus.className = runRes.success ? "terminal-status-success" : "terminal-status-idle";
+          }
+          if (compilerBadge) {
+            compilerBadge.textContent = "Simulator";
+            compilerBadge.className = "compiler-badge mode-sim";
+          }
+          return;
+        }
         setTerminalOutput(runRes.output);
         if (terminalStatus) {
           terminalStatus.textContent = runRes.success ? "Success" : "Error";
