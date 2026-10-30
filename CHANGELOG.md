@@ -4,6 +4,22 @@ User-facing changes for each release are recorded here. Versions use
 `MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
 
 
+## 0.1.3.0 - 2026-10-30
+
+### Fixed
+
+- Route all C++ execution — including lessons with `cin` and `getline` — through
+  the native GCC companion server first, instead of defaulting immediately to the
+  browser simulator. The simulator is now a true last resort, only engaged when
+  the companion server is offline or no compiler is installed.
+- Compile errors and runtime failures from GCC are correctly surfaced in the
+  terminal with the native compiler label and accurate exit codes.
+- Badge now shows `No Compiler on PATH` (warning style) when the server is
+  reachable but no compiler is detected, before falling through to the simulator.
+- Add a 20-second `AbortSignal.timeout` on the native fetch so a hung server
+  cannot block the run button indefinitely.
+
+
 ## 0.1.2.1 - 2026-10-30
 
 ### Changed
