@@ -570,8 +570,8 @@ const LESSONS_DATA = [
         },
         {
           "id": 2,
-          "answer": "",
-          "hint": ""
+          "answer": "*",
+          "hint": "Dereference operator"
         }
       ]
     }
@@ -910,8 +910,8 @@ const LESSONS_DATA = [
       "blanks": [
         {
           "id": 1,
-          "answer": "",
-          "hint": ""
+          "answer": "*",
+          "hint": "Multiplication operator"
         }
       ]
     }
@@ -1156,8 +1156,8 @@ const LESSONS_DATA = [
         },
         {
           "id": 2,
-          "answer": "",
-          "hint": ""
+          "answer": "&",
+          "hint": "Address-of operator used to bind a reference"
         }
       ]
     }
