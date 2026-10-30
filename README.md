@@ -28,7 +28,7 @@ I am genuinely not sure how effective this will be for other people. I built it 
 
 ## What it is
 
-C++ Core is a 42-lesson interactive tutorial that runs in the browser. You write code in an editor, click Run, and the platform either compiles and executes it through your local `g++` or `clang++` compiler using the companion server, or falls back to a client-side simulator.
+C++ Core is a 58-lesson interactive tutorial that runs in the browser. You write code in an editor, click Run, and the platform either compiles and executes it through your local `g++` or `clang++` compiler using the companion server, or falls back to a client-side simulator.
 
 There is no frontend framework, bundler, or `npm install` requirement. The application is built with HTML, CSS, and JavaScript. Two alternative, zero-dependency companion servers are provided: one in Node.js and one in Python.
 
@@ -59,16 +59,16 @@ Additional features include:
 3. Variables & Core Data Types
 4. Working with Strings
 5. Numbers & Math Operations
-6. Getting User Input
+6. Getting User Input (cin & getline)
 
 ### Phase 2: Control Flow & Mini Projects
 
-7. Building Mini Projects (Calculator & Mad Libs)
-8. Arrays (Fixed-Size Containers)
+7. Building Mini Projects: Calculator & Mad Libs
+8. Arrays (Fixed Size Containers)
 9. Functions & Return Values
 10. If Statements & Logical Operators
 11. Switch Statements
-12. Loops (While, Do-While & For)
+12. Loops: While, Do-While & For
 13. Building an Interactive Guessing Game
 14. 2D Arrays & Nested Loops
 
@@ -79,14 +79,14 @@ Additional features include:
 ### Phase 4: Object-Oriented C++
 
 16. Classes & Objects
-17. Constructors
+17. Constructors & Initialisation Lists
 18. Object Functions (Member Methods)
 19. Getters, Setters & Encapsulation
 20. Inheritance & Method Overriding
 
 ### Phase 5: Intermediate Systems & CLI Graphics
 
-21. Structs, Modulo & Time Distance
+21. Structs, Modulo & Time Calculations
 22. ANSI Terminal Art & 24-Bit TrueColor
 23. STL Vectors & Modern Random Engines
 
@@ -98,22 +98,50 @@ Additional features include:
 27. Sets, Maps & Binary Minterm Generation
 28. Capstone 3: Boolean Algebra Evaluator & Truth Tables
 29. Gray Code & Karnaugh Map Fundamentals
-30. Capstone 4: Interactive Karnaugh Map (K-Map) Visualiser
+30. Capstone 4: Interactive Karnaugh Map Visualiser
 
 ### Phase 7: Extended Foundations & Practice
 
-31. Constants & Type Casting
-32. Interactive BMI Calculator
-33. String Comparison & Advanced Methods
+31. Constants, Type Casting & Explicit Conversions
+32. Interactive BMI Calculator Project
+33. String Comparison & Advanced Member Methods
 34. Pass-by-Value vs Pass-by-Reference
-35. Exception Handling (try / catch / throw)
-36. Interactive Grade Calculator with Exception Handling
-37. Virtual Functions & Polymorphism
-38. Interactive Bank Account (OOP + Input)
-39. References vs Pointers Side-by-Side
-40. Interactive Word & Character Counter
-41. Function Overloading
+35. Exception Handling Mechanics (try, catch, throw)
+36. Interactive Grade Calculator with Input Validation
+37. Virtual Functions, Pure Interfaces & Polymorphism
+38. Interactive Bank Account System (OOP + Input)
+39. Pointers vs References Side-by-Side Comparison
+40. Interactive Word & Character Counter Utility
+41. Function Overloading & Name Mangling
 42. File I/O: Reading & Writing Files
+
+### Phase 8: Systems Architecture & Memory
+
+43. Scope, Storage Duration & Object Lifecycles
+44. Dynamic Memory Allocation (new / delete) & Stack vs Heap
+
+### Phase 9: Modern Standard Template Library (STL)
+
+45. Standard Template Library Sequence Containers (std::array & std::vector)
+46. Standard Template Library Associative Containers (std::map & std::unordered_map)
+47. Lambda Expressions, Closures & Captures
+48. Standard Algorithms & Iterator Mechanics
+
+### Phase 10: Modern Memory, Safety & Generic Programming
+
+49. Smart Pointers (std::unique_ptr & std::shared_ptr) & RAII
+50. Function & Class Templates (Generic Programming)
+51. Move Semantics & Copy-vs-Move Operations
+52. Modern C++ Features: auto, range-for, std::optional & std::string_view
+53. Exception Safety Guarantees & RAII Resource Management
+54. Operator Overloading (Binary & Unary Operators)
+55. C++20 Concepts, Requirements & Type Traits
+
+### Phase 11: Advanced Engineering
+
+56. Concurrency & Multithreading (std::thread, std::async, std::mutex)
+57. Unit Testing Frameworks (Catch2 & GTest)
+58. Secure C++ Engineering, Buffer Overflow Avoidance & Code Hardening
 
 ## Execution architecture
 

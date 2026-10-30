@@ -4,6 +4,27 @@ User-facing changes for each release are recorded here. Versions use
 `MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
 
 
+## 0.1.2.0 - 2026-10-30
+
+### Added
+
+- Expand curriculum to 58 comprehensive lessons (adding Lessons 43–58), introducing modern C++ architecture, memory management, and engineering practices:
+  - Systems Architecture: Storage durations, object lifecycles, and dynamic heap allocation (`new`/`delete`).
+  - Modern STL Systems: Sequence containers (`std::array`, `std::vector`), associative containers (`std::map`, `std::unordered_map`), lambda expressions & closures, algorithms, and iterators.
+  - Modern Memory & Safety: Smart pointers (`std::unique_ptr`, `std::shared_ptr`), RAII, move semantics, and exception safety guarantees.
+  - Generic Programming: Function and class templates, operator overloading, and C++20 concepts & constraints.
+  - Modern C++ Idioms: `auto`, range-based `for` loops, `std::optional`, and `std::string_view`.
+  - Advanced Engineering: Standard concurrency & multithreading (`std::thread`, `std::async`, `std::mutex`), unit testing frameworks (Catch2 & GTest), and secure C++ engineering practices.
+- Add complete interactive drills, quizzes with explanations, starter code, and transitional C-bridge notes for all 58 lessons.
+
+### Changed
+
+- Update `lessons.md` curriculum specification and `lessons.js` application data to the 58-lesson modernized curriculum.
+- Graduate release line from `0.1.1.7-beta` to stable production release `0.1.2.0`.
+- Update documentation and README to reflect the full 58-lesson syllabus and expanded subject coverage.
+
+
+
 ## 0.1.1 - 2026-10-25
 
 ### Added

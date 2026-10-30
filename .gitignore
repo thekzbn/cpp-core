@@ -35,5 +35,9 @@ C++/
 workspace.json
 .workspace
 Quing C++ Core.exe
-Quing C++ Core.exe
 *.exe
+
+# Exported curriculum / AI prompt dumps
+lessons.md
+curriculum_lessons.md
+
