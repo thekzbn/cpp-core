@@ -4,6 +4,26 @@ User-facing changes for each release are recorded here. Versions use
 `MAJOR.MINOR.PATCH.REVISION`, with an optional `-alpha` or `-beta` suffix.
 
 
+## 0.1.2.1 - 2026-10-30
+
+### Changed
+
+- Restructure curriculum progression so the Capstone Applications Suite is positioned at the very end after all foundational, memory, OOP, extended, STL, generic, and advanced engineering lessons.
+- Integrate complete production-grade blueprints, theoretical foundations, implementation walkthroughs, and full source code from `capstone.md` into the culminating milestone capstones (Terminal Wordle, 2D Elevation Heat Map Renderer, Boolean Algebra Evaluator, and Interactive Karnaugh Map Visualiser).
+- Reorder and renumber lessons to reflect this pedagogical sequence:
+  - Lessons 1–23: Foundations, Control Flow, Memory, OOP, and Intermediate Systems.
+  - Lessons 24–35: Foundations Extended (Type Casting, Strings, References, Exceptions, Overloading, File I/O).
+  - Lessons 36–37: Object-Oriented Extended (Polymorphism & OOP Banking).
+  - Lesson 38: Memory Architecture Extended (Pointers vs References).
+  - Lessons 39–40: Systems Architecture (Storage Durations & Dynamic Heap Allocation).
+  - Lessons 41–44: Modern STL Systems (Containers, Lambdas & Algorithms).
+  - Lessons 45–47: Modern Memory & Safety (Smart Pointers, Move Semantics & Exception Safety).
+  - Lessons 48–50: Generic Programming (Templates, Operator Overloading & C++20 Concepts).
+  - Lesson 51: Modern C++ Idioms (auto, range-for, optional, string_view) and Advanced Engineering (Concurrency, Testing & Security).
+  - Lessons 52–58: Culminating Capstone Applications (Wordle, 2D Grids, Elevation Heat Map, Sets/Maps/Minterms, Boolean Evaluator, Gray Code, and K-Map Visualiser).
+
+
+
 ## 0.1.2.0 - 2026-10-30
 
 ### Added

@@ -1,8 +1,9 @@
-// lessons.js - Complete curriculum based on FreeCodeCamp C++ Course & Modernized Core Curriculum
-// Full 58-lesson expanded curriculum: Foundations, Control Flow, Memory Architecture,
-// OOP, Systems Architecture, Modern STL Systems, Modern Memory & Safety, Generic Programming,
-// Capstone Applications, and Advanced Engineering.
-// Includes beginner explanations, C-bridge notes, interactive drills, and capstone projects.
+// lessons.js - Complete curriculum with culminating Capstone Applications Suite
+// Full 58-lesson expanded curriculum: Foundations (1-6), Control Flow & Mini Projects (7-14),
+// Memory Architecture (15), Object-Oriented C++ (16-20), Intermediate Systems & CLI (21-23),
+// Extended Foundations & Practice (24-35), Extended OOP & Memory (36-38), Systems Architecture (39-40),
+// Modern STL Systems (41-44), Modern Memory & Safety (45-47), Generic Programming (48-50),
+// Modern C++ Idioms (51), Advanced Engineering (52-54), and Culminating Capstones (55-58).
 
 const LESSONS_DATA = [
   {
@@ -850,241 +851,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "24-capstone-wordle",
-    "category": "Capstone Applications",
-    "fileSlug": "24_capstone_terminal_wordle",
-    "title": "24. Capstone 1: Terminal Wordle with TrueColor Themes",
-    "summary": "Build a complete terminal Wordle clone featuring ANSI TrueColor themes, letter feedback states, and word list validation.",
-    "cBridge": "This capstone combines C++ standard algorithms, `std::vector`, `std::string`, and ANSI escape sequences into a self-contained command-line game application.",
-    "content": "\n<h3>Game State Mechanics</h3>\n\n<p>Wordle evaluates 5-letter word guesses against a secret target word, mapping each letter position to one of three state outcomes:</p>\n\n<ul>\n\n  <li><strong>Correct (Green):</strong> Letter matches exact position in target word.</li>\n\n  <li><strong>Present (Yellow):</strong> Letter exists in target word but at a different index position.</li>\n\n  <li><strong>Absent (Gray):</strong> Letter does not exist in target word.</li>\n\n</ul>\n\n<h3>TrueColor ANSI Theme Rendering</h3>\n\n<p>ANSI TrueColor escape codes apply custom visual styling to terminal letter boxes based on state evaluations.</p>\n",
-    "starterCode": "// 24_capstone_terminal_wordle.cpp\n#include <iostream>\n#include <string>\n#include <vector>\n\nenum class LetterState { Absent, Present, Correct };\n\nstruct Tile {\n    char letter;\n    LetterState state;\n};\n\nvoid renderGrid(const std::vector<std::vector<Tile>>& grid) {\n    for (const auto& row : grid) {\n        for (const auto& tile : row) {\n            if (tile.state == LetterState::Correct) {\n                std::cout << \"\\x1b[48;2;83;141;78m\\x1b[38;2;255;255;255m \" << tile.letter << \" \\x1b[0m\";\n            } else if (tile.state == LetterState::Present) {\n                std::cout << \"\\x1b[48;2;181;159;59m\\x1b[38;2;255;255;255m \" << tile.letter << \" \\x1b[0m\";\n            } else {\n                std::cout << \"\\x1b[48;2;58;58;60m\\x1b[38;2;255;255;255m \" << tile.letter << \" \\x1b[0m\";\n            }\n        }\n        std::cout << \"\\n\";\n    }\n}\n\nint main() {\n    std::cout << \"=== Terminal Wordle Visualiser ===\\n\";\n    std::vector<std::vector<Tile>> grid = {\n        {{'C', LetterState::Absent}, {'O', LetterState::Present}, {'D', LetterState::Correct}, {'E', LetterState::Correct}, {'S', LetterState::Absent}}\n    };\n\n    renderGrid(grid);\n    return 0;\n}",
-    "explanation": "The `Tile` struct couples a character with its `LetterState` enum value. `renderGrid` iterates over 2D tile vectors and outputs RGB ANSI background colors matching tile states.",
-    "quiz": {
-      "question": "What role is served by the `enum class LetterState` in this capstone?",
-      "options": [
-        "Storing user input strings",
-        "Providing a type-safe enumeration for tile feedback states",
-        "Managing terminal cursor movement",
-        "Compiling word dictionary files"
-      ],
-      "answer": 1,
-      "explanation": "Scoped enums supply type-safe representations for letter validation states."
-    },
-    "fillBlank": {
-      "instructions": "Complete the enum definition for letter validation states:",
-      "codeTemplate": "___1___ class LetterState {\n    Absent,\n    Present,\n    Correct\n};",
-      "blanks": [
-        {
-          "id": 1,
-          "answer": "enum",
-          "hint": "C++ keyword defining an enumeration type"
-        }
-      ]
-    }
-  },
-  {
-    "id": "25-2d-vectors-and-normalisation",
-    "category": "Capstone Applications",
-    "fileSlug": "25_2d_vectors_and_normalisation",
-    "title": "25. 2D Vectors, Dynamic Grids & Data Normalisation",
-    "summary": "Manage dynamic two-dimensional vector grids and normalize raw numeric dataset ranges into normalized 0.0 to 1.0 ranges.",
-    "cBridge": "In C, dynamic 2D matrices required manual pointer-to-pointer allocations (`int **matrix = malloc(...)`) and loops for `free()`. In C++, `std::vector<std::vector<T>>` handles dynamic memory allocation and deallocation automatically.",
-    "content": "\n<h3>Dynamic Grids with Nested Vectors</h3>\n\n<p>A dynamic 2D grid is instantiated as <code>std::vector&lt;std::vector&lt;double&gt;&gt; grid(rows, std::vector&lt;double&gt;(cols, initialValue))</code>.</p>\n\n<h3>Data Normalisation Formula</h3>\n\n<p>Data normalisation maps arbitrary raw numeric datasets into normalized $[0.0, 1.0]$ floating-point ranges:</p>\n\n<p>$$N = \\frac{x - x_{\\min}}{x_{\\max} - x_{\\min}}$$</p>\n\n<p>Normalisation allows raw topological elevation numbers to map cleanly onto colour gradient heat maps.</p>\n",
-    "starterCode": "// 25_2d_vectors_and_normalization.cpp\n#include <iostream>\n#include <vector>\n#include <algorithm>\n\nint main() {\n    std::vector<std::vector<double>> rawGrid{\n        {100.0, 250.0, 400.0},\n        {50.0,  300.0, 500.0}\n    };\n\n    double minVal = rawGrid[0][0];\n    double maxVal = rawGrid[0][0];\n\n    for (const auto& row : rawGrid) {\n        for (double val : row) {\n            minVal = std::min(minVal, val);\n            maxVal = std::max(maxVal, val);\n        }\n    }\n\n    std::cout << \"Min: \" << minVal << \", Max: \" << maxVal << \"\\nNormalised Grid:\\n\";\n\n    for (const auto& row : rawGrid) {\n        for (double val : row) {\n            double norm = (val - minVal) / (maxVal - minVal);\n            std::cout << norm << \"\\t\";\n        }\n        std::cout << \"\\n\";\n    }\n\n    return 0;\n}",
-    "explanation": "The program scans the dynamic 2D vector grid to determine `minVal` ($50.0$) and `maxVal` ($500.0$). It applies the normalisation formula, yielding floating-point values between $0.0$ and $1.0$.",
-    "quiz": {
-      "question": "What value is produced when normalising raw value $x = 300.0$ in range $[100.0, 500.0]$?",
-      "options": [
-        "`0.25`",
-        "`0.50`",
-        "`0.75`",
-        "`1.00`"
-      ],
-      "answer": 1,
-      "explanation": "$\\frac{300 - 100}{500 - 100} = \\frac{200}{400} = 0.50$."
-    },
-    "fillBlank": {
-      "instructions": "Complete the dynamic 2D vector instantiation for a grid with 5 rows and 10 columns initialised to 0.0:",
-      "codeTemplate": "#include <vector>\n\nint rows{5}, cols{10};\nstd::vector<std::___1___<double>> grid(rows, std::vector<double>(cols, 0.0));",
-      "blanks": [
-        {
-          "id": 1,
-          "answer": "vector",
-          "hint": "Standard STL dynamic container template"
-        }
-      ]
-    }
-  },
-  {
-    "id": "26-capstone-elevation-heatmap",
-    "category": "Capstone Applications",
-    "fileSlug": "26_capstone_elevation_heatmap",
-    "title": "26. Capstone 2: 2D Elevation Heat Map Renderer",
-    "summary": "Render 2D topographic terrain elevation datasets as coloured ANSI TrueColor heat maps in the terminal.",
-    "cBridge": "This capstone combines 2D dynamic vector grids, mathematical range normalisation, and ANSI RGB TrueColor rendering to display topographic data graphically in the terminal.",
-    "content": "\n<h3>Terrain Elevation Visualisation</h3>\n\n<p>Topographic elevation grids represent spatial elevation measurements. Normalising raw elevation numbers into normalized $[0.0, 1.0]$ float values allows mapping elevations directly to linear RGB colour gradients.</p>\n\n<h3>Linear RGB Color Interpolation</h3>\n\n<p>Colour values interpolate linearly between cold valley colours (blue: <code>RGB(0, 0, 255)</code>) and warm peak colours (red: <code>RGB(255, 0, 0)</code>):</p>\n\n<p>$$R = \\text{static\\_cast}<int>(norm \\times 255)$$</p>\n\n<p>$$B = \\text{static\\_cast}<int>((1.0 - norm) \\times 255)$$</p>\n",
-    "starterCode": "// 26_capstone_elevation_heatmap.cpp\n#include <iostream>\n#include <vector>\n\nvoid renderHeatMap(const std::vector<std::vector<double>>& normGrid) {\n    for (const auto& row : normGrid) {\n        for (double val : row) {\n            int r = static_cast<int>(val * 255);\n            int g = 0;\n            int b = static_cast<int>((1.0 - val) * 255);\n            std::cout << \"\\x1b[48;2;\" << r << \";\" << g << \";\" << b << \"m  \\x1b[0m\";\n        }\n        std::cout << \"\\n\";\n    }\n}\n\nint main() {\n    std::cout << \"=== 2D Elevation Heat Map ===\\n\";\n    std::vector<std::vector<double>> normGrid{\n        {0.0, 0.25, 0.5},\n        {0.5, 0.75, 1.0}\n    };\n\n    renderHeatMap(normGrid);\n    return 0;\n}",
-    "explanation": "`renderHeatMap` processes normalised values between $0.0$ and $1.0$. Values near $0.0$ generate blue backgrounds, while values near $1.0$ generate red backgrounds.",
-    "quiz": {
-      "question": "In a linear blue-to-red elevation heat map gradient, what RGB color is generated for normalised elevation `0.0`?",
-      "options": [
-        "`RGB(255, 0, 0)` (Red)",
-        "`RGB(0, 0, 255)` (Blue)",
-        "`RGB(0, 255, 0)` (Green)",
-        "`RGB(255, 255, 255)` (White)"
-      ],
-      "answer": 1,
-      "explanation": "At `val = 0.0`, `r = 0` and `b = 255`, yielding pure blue."
-    },
-    "fillBlank": {
-      "instructions": "Complete the cast operation converting normalised float values to integer RGB color components:",
-      "codeTemplate": "double normVal = 0.75;\nint redComponent = ___1___<int>(normVal * 255);",
-      "blanks": [
-        {
-          "id": 1,
-          "answer": "static_cast",
-          "hint": "Modern C++ explicit type conversion operator"
-        }
-      ]
-    }
-  },
-  {
-    "id": "27-sets-maps-and-bit-manipulation",
-    "category": "Capstone Applications",
-    "fileSlug": "27_sets_maps_and_bit_manipulation",
-    "title": "27. Sets, Maps & Binary Minterm Generation",
-    "summary": "Master associative containers std::set and std::map, and manipulate binary minterm bitmasks.",
-    "cBridge": "In C, unique collections and key-value lookups required building hash tables or red-black trees manually. C++ supplies associative containers `std::set` and `std::map` in the standard library.",
-    "content": "\n<h3>Standard Associative Containers</h3>\n\n<ul>\n\n  <li><strong><code>std::set&lt;T&gt;</code>:</strong> Stores unique elements sorted automatically in logarithmic time $O(\\log N)$. Duplicate insertions are ignored.</li>\n\n  <li><strong><code>std::map&lt;Key, Value&gt;</code>:</strong> Stores unique key-value pairs sorted by key. Subscript lookup (<code>map[key]</code>) retrieves or inserts key entries.</li>\n\n</ul>\n\n<h3>Bitwise Operators & Binary Minterm Generation</h3>\n\n<p>Bitwise operators perform direct binary operations: <code>&amp;</code> (AND), <code>|</code> (OR), <code>^</code> (XOR), <code>~</code> (NOT), <code>&lt;&lt;</code> (left shift), and <code>&gt;&gt;</code> (right shift). Bit shifts generate binary minterms ($2^N$ truth combinations) for boolean functions.</p>\n",
-    "starterCode": "// 27_sets_maps_and_bit_manipulation.cpp\n#include <iostream>\n#include <set>\n#include <map>\n\nint main() {\n    std::set<int> uniqueMinterms{1, 3, 3, 5, 7};\n    std::cout << \"Unique minterms count: \" << uniqueMinterms.size() << \"\\n\";\n\n    std::map<std::string, int> truthTable;\n    truthTable[\"00\"] = 0;\n    truthTable[\"01\"] = 1;\n    truthTable[\"10\"] = 1;\n    truthTable[\"11\"] = 0;\n\n    for (const auto& [input, output] : truthTable) {\n        std::cout << \"Input: \" << input << \" -> Output: \" << output << \"\\n\";\n    }\n\n    return 0;\n}",
-    "explanation": "`std::set` ignores duplicate `3`. Structured binding (`auto [input, output]`) iterates over key-value entries in `truthTable` in sorted order.",
-    "quiz": {
-      "question": "What is the time complexity for element insertion in an `std::set`?",
-      "options": [
-        "$O(1)$",
-        "$O(\\log N)$",
-        "$O(N)$",
-        "$O(N^2)$"
-      ],
-      "answer": 1,
-      "explanation": "`std::set` is implemented as a balanced self-balancing search tree, yielding $O(\\log N)$ search and insertion bounds."
-    },
-    "fillBlank": {
-      "instructions": "Complete the bitwise left shift operation computing $2^N$ minterm count for $N = 3$ variables:",
-      "codeTemplate": "int numVars = 3;\nint numRows = 1 ___1___ numVars; // Evaluates 1 << 3 = 8",
-      "blanks": [
-        {
-          "id": 1,
-          "answer": "<<",
-          "hint": "Bitwise left-shift operator"
-        }
-      ]
-    }
-  },
-  {
-    "id": "28-capstone-boolean-evaluator",
-    "category": "Capstone Applications",
-    "fileSlug": "28_capstone_boolean_evaluator",
-    "title": "28. Capstone 3: Boolean Algebra Evaluator & Truth Tables",
-    "summary": "Parse boolean expressions and generate automated truth tables for digital logic expressions.",
-    "cBridge": "This capstone combines dynamic stack evaluation, `std::string` processing, and associative map variable lookups to construct a boolean expression evaluator.",
-    "content": "\n<h3>Boolean Expression Syntax & Operators</h3>\n\n<p>Digital logic expressions evaluate binary variables using boolean operations:</p>\n\n<ul>\n\n  <li><strong>AND (<code>&amp;</code> or <code>*</code>):</strong> Evaluates <code>true</code> if both inputs are <code>1</code>.</li>\n\n  <li><strong>OR (<code>|</code> or <code>+</code>):</strong> Evaluates <code>true</code> if at least one input is <code>1</code>.</li>\n\n  <li><strong>NOT (<code>!</code> or <code>'</code>):</strong> Inverts binary truth value.</li>\n\n</ul>\n\n<h3>Truth Table Generation Algorithm</h3>\n\n<p>To generate a truth table for $N$ boolean variables:</p>\n\n<ol>\n\n  <li>Identify all unique variable identifiers using <code>std::set</code>.</li>\n\n  <li>Iterate through all $2^N$ binary minterm assignments ($0$ to $2^N - 1$).</li>\n\n  <li>Evaluate the boolean expression for each variable assignment and print formatted rows.</li>\n\n</ol>\n",
-    "starterCode": "// 28_capstone_boolean_evaluator.cpp\n#include <iostream>\n#include <string>\n#include <map>\n#include <cmath>\n\nbool evalSimpleAnd(bool a, bool b) {\n    return a && b;\n}\n\nint main() {\n    std::cout << \"=== Automated Truth Table Generator (A AND B) ===\\n\";\n    std::cout << \"A\\tB\\tResult\\n\";\n    std::cout << \"-----------------\\n\";\n\n    for (int i{0}; i < 4; ++i) {\n        bool a = (i & 2) != 0;\n        bool b = (i & 1) != 0;\n        bool res = evalSimpleAnd(a, b);\n        std::cout << a << \"\\t\" << b << \"\\t\" << res << \"\\n\";\n    }\n\n    return 0;\n}",
-    "explanation": "The loop runs through 4 minterms ($0$ to $3$). Bitwise extraction `(i & 2)` and `(i & 1)` derives binary variable states for `a` and `b`, outputting truth table results.",
-    "quiz": {
-      "question": "How many total rows exist in a truth table for a boolean expression containing $N = 4$ distinct variables?",
-      "options": [
-        "`8`",
-        "`16`",
-        "`32`",
-        "`64`"
-      ],
-      "answer": 1,
-      "explanation": "Total truth table rows equal $2^N = 2^4 = 16$."
-    },
-    "fillBlank": {
-      "instructions": "Complete the bitwise check extracting the binary bit at position 0:",
-      "codeTemplate": "int minterm = 3; // Binary 11\nbool varB = (minterm ___1___ 1) != 0; // Bitwise AND check",
-      "blanks": [
-        {
-          "id": 1,
-          "answer": "&",
-          "hint": "Bitwise AND operator"
-        }
-      ]
-    }
-  },
-  {
-    "id": "29-gray-code-and-karnaugh-maps",
-    "category": "Capstone Applications",
-    "fileSlug": "29_gray_code_and_karnaugh_maps",
-    "title": "29. Gray Code & Karnaugh Map Fundamentals",
-    "summary": "Understand Gray code sequences, single-bit adjacency transitions, and Karnaugh map (K-Map) reduction grids.",
-    "cBridge": "Gray code conversion uses bitwise binary transformations (`binary ^ (binary >> 1)`), providing $O(1)$ conversions between standard binary and Gray code numbers.",
-    "content": "\n<h3>Gray Code Sequences</h3>\n\n<p>Gray code is a binary numeral system where two successive values differ in only a single bit position. Standard binary sequences ($00, 01, 10, 11$) alter two bits when transitioning from $01$ to $10$. Gray code sequences ($00, 01, 11, 10$) enforce single-bit adjacency.</p>\n\n<h3>Binary to Gray Code Conversion</h3>\n\n<p>$$G = B \\oplus (B \\gg 1)$$</p>\n\n<p>Where $\\oplus$ represents bitwise XOR (<code>^</code>) and $\\gg$ represents right bit shift (<code>&gt;&gt;</code>).</p>\n\n<h3>Karnaugh Map (K-Map) Layout</h3>\n\n<p>K-Maps arrange boolean minterm truth cells into 2D grids using Gray code row/column headers, enabling visual boolean minimization.</p>\n",
-    "starterCode": "// 29_gray_code_and_karnaugh_maps.cpp\n#include <iostream>\n\nunsigned int binaryToGray(unsigned int num) {\n    return num ^ (num >> 1);\n}\n\nint main() {\n    std::cout << \"Binary to Gray Code Sequence (0 to 3):\\n\";\n    for (unsigned int i{0}; i < 4; ++i) {\n        unsigned int g = binaryToGray(i);\n        std::cout << \"Binary: \" << i << \" -> Gray: \" << g << \"\\n\";\n    }\n\n    return 0;\n}",
-    "explanation": "`binaryToGray` computes `num ^ (num >> 1)`. For $2$ (`10` in binary), $2 \\oplus (2 \\gg 1) = 2 \\oplus 1 = 3$ (`11` in Gray code), satisfying single-bit adjacency.",
-    "quiz": {
-      "question": "What property defines Gray code binary sequences?",
-      "options": [
-        "All values are prime numbers",
-        "Adjacent sequence numbers differ in exactly one single bit position",
-        "Values increment by 2",
-        "Numbers are stored in reverse"
-      ],
-      "answer": 1,
-      "explanation": "Gray code enforces single-bit adjacency between adjacent sequence values."
-    },
-    "fillBlank": {
-      "instructions": "Complete the bitwise XOR operation converting binary numbers into Gray code:",
-      "codeTemplate": "unsigned int bin = 2;\nunsigned int gray = bin ___1___ (bin >> 1);",
-      "blanks": [
-        {
-          "id": 1,
-          "answer": "^",
-          "hint": "Bitwise XOR operator"
-        }
-      ]
-    }
-  },
-  {
-    "id": "30-capstone-kmap-visualiser",
-    "category": "Capstone Applications",
-    "fileSlug": "30_capstone_kmap_visualiser",
-    "title": "30. Capstone 4: Interactive Karnaugh Map Visualiser",
-    "summary": "Render interactive Karnaugh Maps (K-Maps) in the terminal with Gray code coordinate headers and visual grouping.",
-    "cBridge": "This capstone combines Gray code sequencing, 2D vector grids, and ANSI color formatting to render interactive 2D Karnaugh Maps in the terminal.",
-    "content": "\n<h3>Karnaugh Map Visualisation Architecture</h3>\n\n<p>A 2D/3D/4D K-Map arranges truth function minterms into a 2D grid where adjacent cell boundaries correspond to single-variable changes.</p>\n\n<h3>Grid Headers & Gray Code Alignment</h3>\n\n<p>Row and column headers are indexed using 2-bit Gray code sequences (<code>00</code>, <code>01</code>, <code>11</code>, <code>10</code>). Adjacent cells wrap around grid edges, reflecting topological torus adjacency.</p>\n",
-    "starterCode": "// 30_capstone_kmap_visualizer.cpp\n#include <iostream>\n#include <vector>\n#include <string>\n\nint main() {\n    std::cout << \"=== 2-Variable Karnaugh Map Visualiser ===\\n\\n\";\n    std::vector<std::string> grayHeaders{\"0\", \"1\"};\n    std::vector<std::vector<int>> kmap{\n        {1, 0}, // A=0: B=0, B=1\n        {1, 1}  # A=1: B=0, B=1\n    };\n\n    std::cout << \"A\\\\B\\t0\\t1\\n\";\n    std::cout << \"-----------------\\n\";\n\n    for (std::size_t r{0}; r < kmap.size(); ++r) {\n        std::cout << grayHeaders[r] << \"\\t\";\n        for (std::size_t c{0}; c < kmap[r].size(); ++c) {\n            if (kmap[r][c] == 1) {\n                std::cout << \"\\x1b[42m 1 \\x1b[0m\\t\";\n            } else {\n                std::cout << \"\\x1b[40m 0 \\x1b[0m\\t\";\n            }\n        }\n        std::cout << \"\\n\";\n    }\n\n    return 0;\n}",
-    "explanation": "`kmap` holds 2D truth minterms. The loops iterate through Gray code headers and output ANSI green highlight backgrounds for minterm cells equal to `1`.",
-    "quiz": {
-      "question": "Why are Gray code orderings (`00, 01, 11, 10`) required for K-Map row and column headers?",
-      "options": [
-        "To make grid sorting faster",
-        "To ensure adjacent visual cells differ by exactly one binary variable",
-        "To reduce memory usage",
-        "To enable 64-bit precision"
-      ],
-      "answer": 1,
-      "explanation": "Gray code headers ensure spatial visual cell adjacency corresponds to single-variable boolean differences."
-    },
-    "fillBlank": {
-      "instructions": "Complete the 2-bit Gray code header sequence vector:",
-      "codeTemplate": "#include <vector>\n#include <string>\n\nstd::vector<std::string> kmapHeaders{\"00\", \"01\", \"___1___\", \"10\"};",
-      "blanks": [
-        {
-          "id": 1,
-          "answer": "11",
-          "hint": "2-bit Gray code value following 01"
-        }
-      ]
-    }
-  },
-  {
-    "id": "31-constants-and-type-casting",
+    "id": "24-constants-and-type-casting",
     "category": "Foundations Extended",
-    "fileSlug": "31_constants_and_casting",
-    "title": "31. Constants, Type Casting & Explicit Conversions",
+    "fileSlug": "24_constants_and_casting",
+    "title": "24. Constants, Type Casting & Explicit Conversions",
     "summary": "Enforce immutability using const and execute safe type conversions using static_cast.",
     "cBridge": "In C, constants relied on preprocessor macros (`#define MAX 100`), which lack type safety and scope. In C++, `const` and `constexpr` provide typed constants. C-style casts (`(double)x`) are replaced by explicit C++ named cast operators such as `static_cast<double>(x)`.",
     "content": "\n<h3>Immutable Variables with <code>const</code></h3>\n\n<p>Marking a variable <code>const</code> guarantees its value cannot be mutated after initialisation. Attempting reassignment generates a compile-time error.</p>\n\n<h3>Explicit Casting with <code>static_cast</code></h3>\n\n<p>C++ provides explicit named cast operators:</p>\n\n<ul>\n\n  <li><code>static_cast&lt;T&gt;(expr)</code>: Performs compile-time checked type conversions (such as <code>int</code> to <code>double</code>).</li>\n\n  <li><code>const_cast&lt;T&gt;(expr)</code>: Casts away <code>const</code> qualification.</li>\n\n  <li><code>reinterpret_cast&lt;T&gt;(expr)</code>: Performs low-level reinterpretation of object bit patterns.</li>\n\n</ul>\n",
@@ -1114,10 +884,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "32-constants-input-program",
+    "id": "25-constants-input-program",
     "category": "Foundations Extended",
-    "fileSlug": "32_bmi_calculator",
-    "title": "32. Interactive BMI Calculator Project",
+    "fileSlug": "25_bmi_calculator",
+    "title": "25. Interactive BMI Calculator Project",
     "summary": "Combine constants, user input, math formulas, and string formatting to build an interactive Body Mass Index calculator.",
     "cBridge": "This exercise combines stream input, `const` thresholds, and `static_cast` into a practical interactive console tool.",
     "content": "\n<h3>Formula Mechanics</h3>\n\n<p>Body Mass Index (BMI) evaluates body mass relative to height:</p>\n\n<p>$$\\text{BMI} = \\frac{\\text{weight\\_kg}}{\\text{height\\_m}^2}$$</p>\n\n<h3>Medical Threshold Constants</h3>\n\n<p>Defining medical category thresholds as <code>const</code> values prevents accidental mutation and keeps code self-documenting.</p>\n",
@@ -1147,10 +917,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "33-string-comparison-and-methods",
+    "id": "26-string-comparison-and-methods",
     "category": "Foundations Extended",
-    "fileSlug": "33_string_comparison",
-    "title": "33. String Comparison & Advanced Member Methods",
+    "fileSlug": "26_string_comparison",
+    "title": "26. String Comparison & Advanced Member Methods",
     "summary": "Master relational string comparisons, character replacement, and sub-string searching methods.",
     "cBridge": "In C, string comparison required `strcmp(s1, s2) == 0`. In C++, `std::string` overloads relational operators (`==`, `!=`, `<`, `>`) for intuitive lexicographical comparison.",
     "content": "\n<h3>Relational Operators on Strings</h3>\n\n<p><code>std::string</code> overloads relational operators:</p>\n\n<ul>\n\n  <li><code>s1 == s2</code>: Evaluates <code>true</code> if character contents match exactly.</li>\n\n  <li><code>s1 &lt; s2</code>: Evaluates <code>true</code> if <code>s1</code> comes before <code>s2</code> lexicographically.</li>\n\n</ul>\n\n<h3>Advanced String Methods</h3>\n\n<ul>\n\n  <li><code>.compare(other)</code>: Returns <code>0</code> if equal, <code>&lt;0</code> if <code>this</code> is lexicographically smaller, and <code>&gt;0</code> if larger.</li>\n\n  <li><code>.replace(pos, len, str)</code>: Replaces a character slice with new content.</li>\n\n  <li><code>.find_first_of(chars)</code>: Locates the first occurrence of any character from a given set.</li>\n\n</ul>\n",
@@ -1180,10 +950,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "34-pass-by-value-vs-reference",
+    "id": "27-pass-by-value-vs-reference",
     "category": "Foundations Extended",
-    "fileSlug": "34_pass_by_reference",
-    "title": "34. Pass-by-Value vs Pass-by-Reference",
+    "fileSlug": "27_pass_by_reference",
+    "title": "27. Pass-by-Value vs Pass-by-Reference",
     "summary": "Understand memory copying in pass-by-value versus zero-copy mutation and performance in pass-by-reference.",
     "cBridge": "In C, modifying argument values inside functions required passing explicit memory addresses (`void update(int *x)`). C++ references (`void update(int &x)`) eliminate pointer syntax while enabling in-place mutation.",
     "content": "\n<h3>Pass-by-Value</h3>\n\n<p>Pass-by-value copies the argument into a new local parameter variable. Modifications inside the function alter only the local copy, leaving the caller's original variable unchanged.</p>\n\n<h3>Pass-by-Reference (<code>T&amp;</code>)</h3>\n\n<p>Pass-by-reference binds an alias directly to the caller's argument. Modifications made inside the function directly alter the caller's variable without memory copying overhead.</p>\n\n<h3>Pass-by-Const-Reference (<code>const T&amp;</code>)</h3>\n\n<p>For large objects (such as <code>std::string</code> or <code>std::vector</code>), passing by const reference (<code>const std::string&amp;</code>) avoids memory copy overhead while guaranteeing the function cannot mutate the original object.</p>\n",
@@ -1213,10 +983,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "35-exception-handling",
+    "id": "28-exception-handling",
     "category": "Foundations Extended",
-    "fileSlug": "35_exception_handling",
-    "title": "35. Exception Handling Mechanics (try, catch, throw)",
+    "fileSlug": "28_exception_handling",
+    "title": "28. Exception Handling Mechanics (try, catch, throw)",
     "summary": "Handle runtime errors safely using try, catch, and throw blocks alongside standard exception types.",
     "cBridge": "In C, error handling relied on returning integer status codes (e.g. `-1`) or setting `errno`, which callers frequently ignored. C++ exception handling decouples error generation from error resolution.",
     "content": "\n<h3>Exception Control Flow</h3>\n\n<p>Exception handling separates error detection from error resolution:</p>\n\n<ul>\n\n  <li><strong><code>throw</code>:</strong> Signal an error by throwing an exception object.</li>\n\n  <li><strong><code>try</code> block:</strong> Encloses code that may throw an exception.</li>\n\n  <li><strong><code>catch</code> block:</strong> Intercepts and handles thrown exception objects.</li>\n\n</ul>\n\n<h3>Standard Exception Hierarchy (<code>&lt;stdexcept&gt;</code>)</h3>\n\n<p>Standard exception classes derive from <code>std::exception</code> and supply a <code>.what()</code> member method describing the error:</p>\n\n<ul>\n\n  <li><code>std::invalid_argument</code>: Thrown when invalid parameters are supplied.</li>\n\n  <li><code>std::out_of_range</code>: Thrown when element indices exceed container bounds.</li>\n\n  <li><code>std::runtime_error</code>: Reports general runtime failures.</li>\n\n</ul>\n",
@@ -1251,10 +1021,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "36-input-grade-calculator",
+    "id": "29-input-grade-calculator",
     "category": "Foundations Extended",
-    "fileSlug": "36_grade_calculator",
-    "title": "36. Interactive Grade Calculator with Input Validation",
+    "fileSlug": "29_grade_calculator",
+    "title": "29. Interactive Grade Calculator with Input Validation",
     "summary": "Synthesize input loops, exceptions, and switch statements to build a robust interactive student grade calculator.",
     "cBridge": "Combining input validation loops with C++ exceptions provides robust input handling for console tools.",
     "content": "\n<h3>Robust Interactive Input Processing</h3>\n\n<p>Real-world console applications validate input ranges before performing computations, catching malformed input gracefully.</p>\n\n<h3>Grade Classification Logic</h3>\n\n<p>Scores spanning $0.0$ to $100.0$ map to letter grades using discrete ranges:</p>\n\n<ul>\n\n  <li>$90.0 - 100.0$: Grade A</li>\n\n  <li>$80.0 - 89.9$: Grade B</li>\n\n  <li>$70.0 - 79.9$: Grade C</li>\n\n  <li>$60.0 - 69.9$: Grade D</li>\n\n  <li>Below $60.0$: Grade F</li>\n\n</ul>\n",
@@ -1284,10 +1054,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "37-virtual-functions-and-polymorphism",
+    "id": "30-virtual-functions-and-polymorphism",
     "category": "Object-Oriented Extended",
-    "fileSlug": "37_virtual_functions",
-    "title": "37. Virtual Functions, Pure Interfaces & Polymorphism",
+    "fileSlug": "30_virtual_functions",
+    "title": "30. Virtual Functions, Pure Interfaces & Polymorphism",
     "summary": "Achieve dynamic runtime polymorphism using virtual functions, pure virtual interfaces, and vtables.",
     "cBridge": "In C, dynamic dispatch required manually managing arrays of function pointers inside structs. In C++, marking a method `virtual` directs the compiler to generate virtual method tables (vtables) automatically.",
     "content": "\n<h3>Dynamic Runtime Dispatch</h3>\n\n<p>Dynamic polymorphism enables invoking derived class method implementations through base class pointers or references at runtime.</p>\n\n<h3>Virtual Methods & Virtual Tables (vtables)</h3>\n\n<p>Marking a base method <code>virtual</code> instructs the compiler to dispatch function calls through a virtual method table (vtable) pointer (<code>vptr</code>).</p>\n\n<h3>Abstract Base Classes & Pure Virtual Functions</h3>\n\n<p>A method declared with <code>= 0</code> (<code>virtual void draw() const = 0;</code>) is a pure virtual function. A class containing at least one pure virtual function is an abstract base class (interface) and cannot be instantiated directly.</p>\n\n<h3>Virtual Destructors</h3>\n\n<p>Polymorphic base classes must declare a <code>virtual ~Base() = default;</code> destructor to ensure derived class destructors run when objects are deleted through base class pointers.</p>\n",
@@ -1322,10 +1092,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "38-interactive-oop-program",
+    "id": "31-interactive-oop-program",
     "category": "Object-Oriented Extended",
-    "fileSlug": "38_bank_account",
-    "title": "38. Interactive Bank Account System (OOP + Input)",
+    "fileSlug": "31_bank_account",
+    "title": "31. Interactive Bank Account System (OOP + Input)",
     "summary": "Apply OOP principles, encapsulation, and exceptions to build an interactive banking application.",
     "cBridge": "This exercise encapsulates bank balance state behind public deposit/withdrawal interfaces, guarding against negative balances using exceptions.",
     "content": "\n<h3>Enforcing Domain Invariants</h3>\n\n<p>A bank account class must enforce strict invariants:</p>\n\n<ul>\n\n  <li>Account balances cannot be negative.</li>\n\n  <li>Withdrawals exceeding available balances must be rejected.</li>\n\n  <li>Deposits must be positive numbers.</li>\n\n</ul>\n",
@@ -1355,10 +1125,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "39-references-and-pointers-compared",
+    "id": "32-references-and-pointers-compared",
     "category": "Memory Architecture Extended",
-    "fileSlug": "39_references_vs_pointers",
-    "title": "39. Pointers vs References Side-by-Side Comparison",
+    "fileSlug": "32_references_vs_pointers",
+    "title": "32. Pointers vs References Side-by-Side Comparison",
     "summary": "Contrast pointer syntax (reseating, nullability, dereferencing) against reference semantics (non-null, immutable aliases).",
     "cBridge": "Pointers originate in C. References were added in C++ to supply cleaner zero-copy parameter passing syntax without dereferencing operators.",
     "content": "\n<h3>Pointer Mechanics</h3>\n\n<p>Pointers are variables that store memory addresses. Pointers can be assigned <code>nullptr</code>, reseated to point to different variables during execution, and require explicit dereferencing (<code>*ptr</code>).</p>\n\n<h3>Reference Mechanics</h3>\n\n<p>References are non-null immutable aliases bound permanently to an object upon initialisation. References cannot be <code>nullptr</code> and cannot be reseated.</p>\n\n<h3>Direct Comparison Matrix</h3>\n\n<p>| Feature | Pointer (<code>T*</code>) | Reference (<code>T&amp;</code>) |</p>\n\n<p>| --- | --- | --- |</p>\n\n<p>| Nullability | Can be <code>nullptr</code> | Cannot be null |</p>\n\n<p>| Reseating | Can point to different objects | Cannot be reseated after binding |</p>\n\n<p>| Syntax | Requires <code>&amp;</code> to obtain address, <code>*</code> to dereference | Uses standard variable access syntax |</p>\n\n<p>| Indirection | Can have multi-level indirection (<code>T**</code>) | Single alias level only |</p>\n",
@@ -1393,10 +1163,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "40-input-driven-word-counter",
+    "id": "33-input-driven-word-counter",
     "category": "Foundations Extended",
-    "fileSlug": "40_word_counter",
-    "title": "40. Interactive Word & Character Counter Utility",
+    "fileSlug": "33_word_counter",
+    "title": "33. Interactive Word & Character Counter Utility",
     "summary": "Parse console stream input to compute total line counts, word counts, and character counts.",
     "cBridge": "In C, parsing word boundaries required manual `getchar()` loops and checking `isspace()`. In C++, `std::stringstream` processes word tokens automatically.",
     "content": "\n<h3>Stream Parsing Mechanics</h3>\n\n<p>Reading entire sentences using <code>std::getline</code> and feeding them into <code>std::stringstream</code> decomposes formatted text into individual word tokens via <code>&gt;&gt;</code>.</p>\n",
@@ -1431,10 +1201,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "41-function-overloading",
+    "id": "34-function-overloading",
     "category": "Foundations Extended",
-    "fileSlug": "41_function_overloading",
-    "title": "41. Function Overloading & Name Mangling",
+    "fileSlug": "34_function_overloading",
+    "title": "34. Function Overloading & Name Mangling",
     "summary": "Declare multiple functions sharing identical names with distinct parameter signatures and understand compiler name mangling.",
     "cBridge": "C does not support function overloading; functions must have unique names (e.g. `abs()`, `fabs()`, `labs()`). C++ compiler name mangling encodes parameter signatures into exported symbol names, enabling function overloading.",
     "content": "\n<h3>Overloading Signatures</h3>\n\n<p>Function overloading allows defining multiple functions sharing the same name provided their parameter lists differ in parameter count, parameter types, or parameter order. Return types alone are insufficient to distinguish overloaded functions.</p>\n\n<h3>Compiler Name Mangling</h3>\n\n<p>Because linkers require unique symbol names, C++ compilers mangle function names by encoding signature type information into generated object file symbols (such as <code>_Z3addii</code> vs <code>_Z3adddd</code>). To disable name mangling when linking against C libraries, use <code>extern \"C\"</code>.</p>\n",
@@ -1464,10 +1234,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "42-file-io-read-write",
+    "id": "35-file-io-read-write",
     "category": "Foundations Extended",
-    "fileSlug": "42_file_io",
-    "title": "42. File I/O: Reading & Writing Files",
+    "fileSlug": "35_file_io",
+    "title": "35. File I/O: Reading & Writing Files",
     "summary": "Read and write external text and binary files using std::ifstream and std::ofstream file streams.",
     "cBridge": "In C, file I/O relied on `FILE*`, `fopen()`, `fprintf()`, and `fclose()`. In C++, `<fstream>` stream classes (`std::ifstream`, `std::ofstream`) open files upon initialisation and close file handles automatically upon destruction via RAII.",
     "content": "\n<h3>File Streams (<code>&lt;fstream&gt;</code>)</h3>\n\n<ul>\n\n  <li><code>std::ofstream</code>: Output file stream used to create and write data to files.</li>\n\n  <li><code>std::ifstream</code>: Input file stream used to read data from files.</li>\n\n  <li><code>std::fstream</code>: Bidirectional input/output file stream.</li>\n\n</ul>\n\n<h3>File Opening Modes</h3>\n\n<p>Streams accept open mode flags:</p>\n\n<ul>\n\n  <li><code>std::ios::app</code>: Append output to the end of the file.</li>\n\n  <li><code>std::ios::binary</code>: Process data in binary mode rather than converting line endings.</li>\n\n</ul>\n",
@@ -1502,10 +1272,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "43-storage-duration-lifecycles",
+    "id": "36-storage-duration-lifecycles",
     "category": "Systems Architecture",
-    "fileSlug": "43_storage_duration_lifecycles",
-    "title": "43. Scope, Storage Duration & Object Lifecycles",
+    "fileSlug": "36_storage_duration_lifecycles",
+    "title": "36. Scope, Storage Duration & Object Lifecycles",
     "summary": "Master automatic, static, thread-local, and dynamic storage durations and object lifetimes.",
     "cBridge": "C++ formalises object life cycles. Object construction occurs when storage is initialised, and lifetime concludes before storage deallocation.",
     "content": "\n<h3>Object Storage Durations</h3>\n\n<p>C++ defines four object storage durations:</p>\n\n<ol>\n\n  <li><strong>Automatic:</strong> Local stack objects created at declaration and destroyed when exiting block scope <code>{}</code>.</li>\n\n  <li><strong>Static:</strong> Global or <code>static</code> variables allocated at program startup and destroyed at process termination.</li>\n\n  <li><strong>Thread-Local:</strong> Variables marked <code>thread_local</code> allocated per thread execution.</li>\n\n  <li><strong>Dynamic:</strong> Heap memory allocated explicitly (<code>new</code> / <code>delete</code> or smart pointers).</li>\n\n</ol>\n\n<h3>Lifetime Guarantees</h3>\n\n<p>Destructors for automatic stack objects execute in reverse order of declaration when exiting scope.</p>\n",
@@ -1535,10 +1305,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "44-dynamic-memory-allocation",
+    "id": "37-dynamic-memory-allocation",
     "category": "Systems Architecture",
-    "fileSlug": "44_dynamic_memory_allocation",
-    "title": "44. Dynamic Memory Allocation (new / delete) & Stack vs Heap",
+    "fileSlug": "37_dynamic_memory_allocation",
+    "title": "37. Dynamic Memory Allocation (new / delete) & Stack vs Heap",
     "summary": "Allocating dynamic memory using new and delete, preventing memory leaks, and understanding stack vs heap tradeoffs.",
     "cBridge": "In C, heap memory was allocated using `malloc()` and `free()`, which do not invoke constructors or destructors. C++ provides `new` and `delete`, which allocate heap memory AND run constructors/destructors.",
     "content": "\n<h3>Stack vs Heap Architecture</h3>\n\n<ul>\n\n  <li><strong>Stack:</strong> Fast, structured LIFO memory managed automatically by CPU stack pointers. Limited in size.</li>\n\n  <li><strong>Heap (Free Store):</strong> Large pool of memory allocated dynamically at runtime using <code>new</code>. Must be deallocated with <code>delete</code> to prevent memory leaks.</li>\n\n</ul>\n\n<h3>Array Allocation Syntax</h3>\n\n<p>Allocating dynamic arrays uses <code>new[]</code> and requires deallocating with <code>delete[]</code>. Mismatched deallocation (<code>delete</code> on <code>new[]</code>) causes undefined behaviour.</p>\n",
@@ -1573,10 +1343,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "45-stl-sequence-containers",
+    "id": "38-stl-sequence-containers",
     "category": "Modern STL Systems",
-    "fileSlug": "45_stl_sequence_containers",
-    "title": "45. Standard Template Library Sequence Containers (std::array & std::vector)",
+    "fileSlug": "38_stl_sequence_containers",
+    "title": "38. Standard Template Library Sequence Containers (std::array & std::vector)",
     "summary": "Master modern sequence containers std::array and std::vector for fixed and dynamic contiguous storage.",
     "cBridge": "`std::array<T, N>` replaces raw C arrays, preserving fixed stack performance while supplying iterator interfaces and `.size()`. `std::vector<T>` supplies heap-backed dynamic resizing arrays.",
     "content": "\n<h3><code>std::array&lt;T, N&gt;</code> (Fixed-Size Stack Container)</h3>\n\n<p><code>std::array</code> wraps raw fixed-size arrays without performance overhead while providing STL iterator support, size queries (<code>.size()</code>), and bounds-checked element access (<code>.at()</code>).</p>\n\n<h3><code>std::vector&lt;T&gt;</code> (Dynamic Heap Container)</h3>\n\n<p><code>std::vector</code> manages contiguous heap memory, resizing dynamically when capacity is exceeded. <code>.reserve(n)</code> preallocates memory capacity to prevent repeated reallocations during bulk insertions.</p>\n",
@@ -1611,10 +1381,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "46-stl-associative-containers",
+    "id": "39-stl-associative-containers",
     "category": "Modern STL Systems",
-    "fileSlug": "46_stl_associative_containers",
-    "title": "46. Standard Template Library Associative Containers (std::map & std::unordered_map)",
+    "fileSlug": "39_stl_associative_containers",
+    "title": "39. Standard Template Library Associative Containers (std::map & std::unordered_map)",
     "summary": "Store key-value pairs using balanced trees (std::map) and hash tables (std::unordered_map).",
     "cBridge": "C lacks standard associative containers. C++ provides `std::map` (ordered red-black trees) and `std::unordered_map` (hash tables).",
     "content": "\n<h3><code>std::map</code> vs <code>std::unordered_map</code></h3>\n\n<ul>\n\n  <li><strong><code>std::map&lt;Key, Value&gt;</code>:</strong> Implemented as a balanced binary search tree. Keys are maintained in sorted order. Search, insertion, and deletion operate in logarithmic time $O(\\log N)$.</li>\n\n  <li><strong><code>std::unordered_map&lt;Key, Value&gt;</code>:</strong> Implemented as a hash table. Keys are unsorted. Search, insertion, and deletion operate in average constant time $O(1)$.</li>\n\n</ul>\n\n<h3>Key Element Access</h3>\n\n<p>Subscript syntax <code>map[key]</code> searches for <code>key</code>. If <code>key</code> is absent, it inserts a default-constructed entry. <code>.at(key)</code> performs bounds checking and throws <code>std::out_of_range</code> if the key does not exist.</p>\n",
@@ -1644,10 +1414,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "47-lambda-expressions",
+    "id": "40-lambda-expressions",
     "category": "Modern STL Systems",
-    "fileSlug": "47_lambda_expressions",
-    "title": "47. Lambda Expressions, Closures & Captures",
+    "fileSlug": "40_lambda_expressions",
+    "title": "40. Lambda Expressions, Closures & Captures",
     "summary": "Create anonymous inline functions using C++ lambda expressions, capture clauses, and closures.",
     "cBridge": "In C, passing callbacks required static function pointers. C++ lambdas generate inline anonymous closure objects that can capture local variables from surrounding scopes.",
     "content": "\n<h3>Lambda Syntax Anatomy</h3>\n\n<p><code>[captures](parameters) -&gt; return_type { body }</code></p>\n\n<ul>\n\n  <li><strong>Capture Clause <code>[]</code>:</strong> Specifies variables captured from surrounding scope.</li>\n\n  <li><code>[]</code>: Captures nothing.</li>\n\n  <li><code>[=]</code>: Captures all surrounding variables by value (read-only copy).</li>\n\n  <li><code>[&amp;]</code>: Captures all surrounding variables by reference (mutable alias).</li>\n\n  <li><code>[x, &amp;y]</code>: Explicit capture (<code>x</code> by value, <code>y</code> by reference).</li>\n\n  <li><strong>Parameters <code>()</code>:</strong> Function parameters.</li>\n\n  <li><strong>Body <code>{}</code>:</strong> Executable statement block.</li>\n\n</ul>\n",
@@ -1677,10 +1447,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "48-stl-algorithms-iterators",
+    "id": "41-stl-algorithms-iterators",
     "category": "Modern STL Systems",
-    "fileSlug": "48_stl_algorithms_iterators",
-    "title": "48. Standard Algorithms & Iterator Mechanics",
+    "fileSlug": "41_stl_algorithms_iterators",
+    "title": "41. Standard Algorithms & Iterator Mechanics",
     "summary": "Leverage standard STL algorithms (std::sort, std::find_if, std::transform) using iterator ranges.",
     "cBridge": "In C, sorting required `qsort()` with `void*` function pointers. C++ `<algorithm>` routines accept type-safe iterator ranges (`container.begin()`, `container.end()`), enabling inline optimisations.",
     "content": "\n<h3>Iterator Ranges (<code>[begin, end)</code>)</h3>\n\n<p>STL algorithms operate on half-open iterator ranges <code>[begin, end)</code>, where <code>begin</code> points to the first element and <code>end</code> points one past the final element.</p>\n\n<h3>Essential STL Algorithms</h3>\n\n<ul>\n\n  <li><code>std::sort(begin, end)</code>: Sorts elements in $O(N \\log N)$ time.</li>\n\n  <li><code>std::find_if(begin, end, predicate)</code>: Returns an iterator to the first element matching a predicate condition.</li>\n\n  <li><code>std::transform(begin, end, dest, op)</code>: Applies a transformation function to each element, storing output at <code>dest</code>.</li>\n\n</ul>\n",
@@ -1715,10 +1485,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "49-smart-pointers-raii",
+    "id": "42-smart-pointers-raii",
     "category": "Modern Memory & Safety",
-    "fileSlug": "49_smart_pointers_raii",
-    "title": "49. Smart Pointers (std::unique_ptr & std::shared_ptr) & RAII",
+    "fileSlug": "42_smart_pointers_raii",
+    "title": "42. Smart Pointers (std::unique_ptr & std::shared_ptr) & RAII",
     "summary": "Automate memory management using smart pointers std::unique_ptr and std::shared_ptr to eliminate raw memory leaks.",
     "cBridge": "Raw `new`/`delete` and `malloc()`/`free()` are error-prone, causing memory leaks and double-free bugs. Modern C++ uses smart pointers (`std::unique_ptr`, `std::shared_ptr`), which manage heap lifetimes automatically using RAII.",
     "content": "\n<h3>Resource Acquisition Is Initialisation (RAII)</h3>\n\n<p>RAII ties resource ownership (heap memory, file handles, sockets) to object lifetimes. Resource acquisition occurs in the constructor, and resource release occurs automatically in the destructor upon exiting scope.</p>\n\n<h3>Modern Smart Pointer Types</h3>\n\n<ul>\n\n  <li><strong><code>std::unique_ptr&lt;T&gt;</code>:</strong> Exclusive ownership smart pointer. Cannot be copied; ownership is transferred using <code>std::move()</code>. Created via <code>std::make_unique&lt;T&gt;()</code>.</li>\n\n  <li><strong><code>std::shared_ptr&lt;T&gt;</code>:</strong> Reference-counted shared ownership smart pointer. Deallocates heap memory when the final reference counter drops to zero. Created via <code>std::make_shared&lt;T&gt;()</code>.</li>\n\n</ul>\n",
@@ -1753,10 +1523,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "50-templates-generic-programming",
+    "id": "43-templates-generic-programming",
     "category": "Generic Programming",
-    "fileSlug": "50_templates_generic_programming",
-    "title": "50. Function & Class Templates (Generic Programming)",
+    "fileSlug": "43_templates_generic_programming",
+    "title": "43. Function & Class Templates (Generic Programming)",
     "summary": "Write type-independent generic code using function and class templates.",
     "cBridge": "In C, generic functions required macros (`#define MAX(a,b) ...`) or `void*` pointers without type safety. C++ templates generate strongly-typed code at compile time.",
     "content": "\n<h3>Compile-Time Code Generation</h3>\n\n<p>Templates allow writing generic code parameterized by types. During compilation, the compiler instantiates template functions and classes for each concrete type used, incurring zero runtime performance overhead.</p>\n\n<h3>Function Templates</h3>\n\n<p><code>template &lt;typename T&gt; T add(T a, T b) { return a + b; }</code></p>\n\n<h3>Class Templates</h3>\n\n<p>Classes parameterized by types (<code>template &lt;typename T&gt; class Stack { ... };</code>) allow building type-safe custom containers.</p>\n",
@@ -1786,10 +1556,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "51-move-semantics",
+    "id": "44-move-semantics",
     "category": "Modern Memory & Safety",
-    "fileSlug": "51_move_semantics",
-    "title": "51. Move Semantics & Copy-vs-Move Operations",
+    "fileSlug": "44_move_semantics",
+    "title": "44. Move Semantics & Copy-vs-Move Operations",
     "summary": "Optimize performance using rvalue references (&&), move constructors, and std::move.",
     "cBridge": "In C, transferring dynamic buffers required copying data or passing pointers. C++ move semantics transfer resource ownership directly between objects without memory allocation.",
     "content": "\n<h3>Lvalues vs Rvalues</h3>\n\n<ul>\n\n  <li><strong>Lvalue:</strong> An expression representing an object with an identifiable memory address (e.g. named variables <code>x</code>).</li>\n\n  <li><strong>Rvalue:</strong> Temporary values or literals that do not persist beyond the evaluating expression (e.g. temporary return values).</li>\n\n</ul>\n\n<h3>Move Constructors & Move Assignment (<code>T&amp;&amp;</code>)</h3>\n\n<p>Move constructors accept rvalue references (<code>T&amp;&amp;</code>). Instead of allocating new heap buffers and copying elements, a move operation steals the pointer from the source object and resets the source pointer to <code>nullptr</code>.</p>\n\n<h3><code>std::move</code></h3>\n\n<p><code>std::move(x)</code> casts an lvalue expression into an rvalue reference, enabling move operations.</p>\n",
@@ -1819,10 +1589,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "52-modern-cpp-features",
+    "id": "45-modern-cpp-features",
     "category": "Modern C++ Idioms",
-    "fileSlug": "52_modern_cpp_features",
-    "title": "52. Modern C++ Features: auto, range-for, std::optional & std::string_view",
+    "fileSlug": "45_modern_cpp_features",
+    "title": "45. Modern C++ Features: auto, range-for, std::optional & std::string_view",
     "summary": "Streamline code expressing clean modern idioms: auto, range-based for loops, std::optional, and zero-copy std::string_view.",
     "cBridge": "Modern C++ (C++17/C++20) introduces idioms that make C++ code cleaner, safer, and faster.",
     "content": "\n<h3>Modern C++ Syntax Idioms</h3>\n\n<ul>\n\n  <li><strong><code>auto</code> Type Deduction:</strong> Directs the compiler to deduce variable types from initialiser expressions.</li>\n\n  <li><strong>Range-based <code>for</code> Loops:</strong> <code>for (const auto&amp; elem : container)</code> iterates container elements cleanly without index tracking.</li>\n\n  <li><strong><code>std::optional&lt;T&gt;</code> (<code>&lt;optional&gt;</code>):</strong> Represents nullable values without requiring raw <code>nullptr</code> pointers or heap allocations.</li>\n\n  <li><strong><code>std::string_view</code> (<code>&lt;string_view&gt;</code>):</strong> Non-owning zero-copy read-only view over character sequences, eliminating string allocations when passing string parameters.</li>\n\n</ul>\n",
@@ -1857,10 +1627,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "53-exception-safety-raii",
+    "id": "46-exception-safety-raii",
     "category": "Modern Memory & Safety",
-    "fileSlug": "53_exception_safety_raii",
-    "title": "53. Exception Safety Guarantees & RAII Resource Management",
+    "fileSlug": "46_exception_safety_raii",
+    "title": "46. Exception Safety Guarantees & RAII Resource Management",
     "summary": "Understand the four levels of exception safety guarantees and the noexcept specifier.",
     "cBridge": "Exception handling requires understanding resource management under error conditions to prevent memory leaks during stack unwinding.",
     "content": "\n<h3>The Four Exception Safety Guarantees</h3>\n\n<ol>\n\n  <li><strong>Nothrow (No-fail) Guarantee:</strong> Operations are guaranteed never to throw exceptions (<code>noexcept</code>). Destructors and move operations should provide this guarantee.</li>\n\n  <li><strong>Strong Exception Guarantee:</strong> If an operation throws an exception, program state rolls back completely to its pre-call state (transactional semantics, \"commit-or-rollback\").</li>\n\n  <li><strong>Basic Exception Guarantee:</strong> If an exception is thrown, no resources are leaked and objects remain in valid (though possibly modified) states.</li>\n\n  <li><strong>No Exception Guarantee:</strong> Throwing an exception leaves the program in a corrupted state with memory leaks or invalid invariants.</li>\n\n</ol>\n\n<h3>The <code>noexcept</code> Specifier</h3>\n\n<p>Marking functions <code>noexcept</code> informs the compiler that the function will not throw. If a <code>noexcept</code> function throws an exception, <code>std::terminate()</code> is invoked immediately.</p>\n",
@@ -1890,10 +1660,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "54-operator-overloading",
+    "id": "47-operator-overloading",
     "category": "Generic Programming",
-    "fileSlug": "54_operator_overloading",
-    "title": "54. Operator Overloading (Binary & Unary Operators)",
+    "fileSlug": "47_operator_overloading",
+    "title": "47. Operator Overloading (Binary & Unary Operators)",
     "summary": "Overload custom mathematical, comparison, and stream insertion operators for user-defined classes.",
     "cBridge": "In C, operating on structs required function calls (`add_complex(c1, c2)`). In C++, operator overloading enables natural mathematical expressions (`c1 + c2`, `std::cout << c1`).",
     "content": "\n<h3>Custom Operator Semantics</h3>\n\n<p>Operator overloading enables user-defined types to respond to standard C++ operators (<code>+</code>, <code>-</code>, <code>==</code>, <code>&lt;&lt;</code>).</p>\n\n<h3>Overloading Rules</h3>\n\n<ul>\n\n  <li>You cannot invent new operator symbols (e.g. <code>**</code> is invalid).</li>\n\n  <li>Precedence and arity rules cannot be changed.</li>\n\n  <li>Stream insertion operators (<code>operator&lt;&lt;</code>) are implemented as non-member <code>friend</code> functions.</li>\n\n</ul>\n",
@@ -1923,10 +1693,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "55-cpp20-concepts",
+    "id": "48-cpp20-concepts",
     "category": "Generic Programming",
-    "fileSlug": "55_cpp20_concepts",
-    "title": "55. C++20 Concepts, Requirements & Type Traits",
+    "fileSlug": "48_cpp20_concepts",
+    "title": "48. C++20 Concepts, Requirements & Type Traits",
     "summary": "Constrain template parameters using C++20 concepts, requires clauses, and type traits to improve compile-time error messages.",
     "cBridge": "In earlier C++ standards, passing incompatible types into templates produced long, cryptic compiler error cascades. C++20 Concepts enforce type constraints at template instantiation, producing clear error messages.",
     "content": "\n<h3>Constraining Generic Templates</h3>\n\n<p>C++20 Concepts constrain template parameters by evaluating compile-time type predicates.</p>\n\n<h3>Built-In Concepts (<code>&lt;concepts&gt;</code>)</h3>\n\n<ul>\n\n  <li><code>std::integral&lt;T&gt;</code>: Constrains <code>T</code> to integral types.</li>\n\n  <li><code>std::floating_point&lt;T&gt;</code>: Constrains <code>T</code> to floating-point types.</li>\n\n  <li><code>std::copyable&lt;T&gt;</code>: Constrains <code>T</code> to copy-constructible types.</li>\n\n</ul>\n\n<h3>Custom Concepts & <code>requires</code> Expressions</h3>\n\n<p>Concepts are defined using <code>concept Name = predicate;</code> and applied using <code>requires</code> clauses.</p>\n",
@@ -1956,10 +1726,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "56-concurrency-multithreading",
+    "id": "49-concurrency-multithreading",
     "category": "Advanced Engineering",
-    "fileSlug": "56_concurrency_multithreading",
-    "title": "56. Concurrency & Multithreading (std::thread, std::async, std::mutex)",
+    "fileSlug": "49_concurrency_multithreading",
+    "title": "49. Concurrency & Multithreading (std::thread, std::async, std::mutex)",
     "summary": "Execute concurrent tasks using std::thread, std::async, std::mutex, and std::lock_guard.",
     "cBridge": "In C, multithreading required platform-dependent C libraries (`pthread_create()`). C++11 supplies a standard, cross-platform threading API (`<thread>`, `<mutex>`, `<future>`).",
     "content": "\n<h3>Standard Threading Primitives</h3>\n\n<ul>\n\n  <li><strong><code>std::thread</code> (<code>&lt;thread&gt;</code>):</strong> Manages concurrent thread execution. Threads must be joined (<code>.join()</code>) or detached (<code>.detach()</code>) before destruction.</li>\n\n  <li><strong><code>std::mutex</code> & <code>std::lock_guard</code> (<code>&lt;mutex&gt;</code>):</strong> Prevents data races when multiple threads access shared resources simultaneously. <code>std::lock_guard</code> acquires a mutex on construction and releases it in its destructor via RAII.</li>\n\n  <li><strong><code>std::async</code> & <code>std::future</code> (<code>&lt;future&gt;</code>):</strong> Executes tasks asynchronously and retrieves return values via futures.</li>\n\n</ul>\n",
@@ -1989,10 +1759,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "57-unit-testing-frameworks",
+    "id": "50-unit-testing-frameworks",
     "category": "Advanced Engineering",
-    "fileSlug": "57_unit_testing_frameworks",
-    "title": "57. Unit Testing Frameworks (Catch2 & GTest)",
+    "fileSlug": "50_unit_testing_frameworks",
+    "title": "50. Unit Testing Frameworks (Catch2 & GTest)",
     "summary": "Write automated unit tests using industry-standard frameworks Catch2 and Google Test.",
     "cBridge": "Automated unit testing is essential in modern software engineering. Frameworks such as Catch2 and Google Test supply macros (`REQUIRE`, `EXPECT_EQ`) for writing test suites.",
     "content": "\n<h3>Unit Testing Principles</h3>\n\n<p>Unit tests verify that isolated functions and classes behave correctly. Tests should be automated, independent, and repeatable.</p>\n\n<h3>Framework Comparisons</h3>\n\n<ul>\n\n  <li><strong>Catch2:</strong> Header-only/single-library framework using expressive assertions (<code>REQUIRE(val == 42)</code>).</li>\n\n  <li><strong>Google Test (GTest):</strong> Framework providing assertions (<code>EXPECT_EQ</code>, <code>ASSERT_TRUE</code>) and test fixtures.</li>\n\n</ul>\n",
@@ -2022,10 +1792,10 @@ const LESSONS_DATA = [
     }
   },
   {
-    "id": "58-secure-cpp-engineering",
+    "id": "51-secure-cpp-engineering",
     "category": "Advanced Engineering",
-    "fileSlug": "58_secure_cpp_engineering",
-    "title": "58. Secure C++ Engineering, Buffer Overflow Avoidance & Code Hardening",
+    "fileSlug": "51_secure_cpp_engineering",
+    "title": "51. Secure C++ Engineering, Buffer Overflow Avoidance & Code Hardening",
     "summary": "Hardening software against security vulnerabilities, avoiding buffer overflows, and applying safe input validation.",
     "cBridge": "Unsafe C functions (`strcpy()`, `gets()`, `sprintf()`) cause buffer overflow vulnerabilities. Modern C++ uses bounds-checked abstractions (`std::string`, `std::vector`, `.at()`) to prevent memory corruption attacks.",
     "content": "\n<h3>Buffer Overflow Vulnerabilities</h3>\n\n<p>Buffer overflows occur when writing data past the allocated boundaries of a buffer, overwriting adjacent stack frames or return addresses. Hackers exploit buffer overflows to execute arbitrary shellcode.</p>\n\n<h3>Secure C++ Engineering Practices</h3>\n\n<ol>\n\n  <li><strong>Never use unsafe C functions:</strong> Replace <code>gets()</code> with <code>std::getline()</code>, and replace <code>strcpy()</code> with <code>std::string</code> or <code>std::string_view</code>.</li>\n\n  <li><strong>Use bounds-checked accessors:</strong> Prefer <code>.at(idx)</code> over unchecked raw subscript indexing <code>[idx]</code>.</li>\n\n  <li><strong>Validate user input ranges:</strong> Reject unexpected input before processing.</li>\n\n  <li><strong>Enable compiler security flags:</strong> Compile with stack protection (<code>-fstack-protector-strong</code>) and address sanitiser (<code>-fsanitize=address</code>).</li>\n\n</ol>\n",
@@ -2050,6 +1820,237 @@ const LESSONS_DATA = [
           "id": 1,
           "answer": "at",
           "hint": "Bounds-checked element access member method"
+        }
+      ]
+    }
+  },
+  {
+    "id": "52-capstone-wordle",
+    "category": "Capstone Applications",
+    "fileSlug": "52_capstone_terminal_wordle",
+    "title": "52. Capstone 1: Terminal Wordle with TrueColor Themes",
+    "summary": "Build a complete terminal Wordle clone featuring ANSI TrueColor themes, letter feedback states, and word list validation.",
+    "cBridge": "This capstone combines C++ standard algorithms, `std::vector`, `std::string`, and ANSI escape sequences into a self-contained command-line game application.",
+    "content": "\n<h3>Overview & Blueprint</h3>\n\n<p>Terminal Wordle is a text-based adaptation of the classic word-deduction game. The player is given six attempts to guess a hidden five-letter target word. After each attempt, the system evaluates the guess and provides character-by-character visual feedback using ANSI 24-bit TrueColor background highlights:</p>\n\n<ul>\n\n  <li><strong>Green (<code>RGB(40, 180, 90)</code>):</strong> Letter is correct and in the exact position.</li>\n\n  <li><strong>Yellow (<code>RGB(220, 180, 30)</code>):</strong> Letter exists in the target word but is at a different position.</li>\n\n  <li><strong>Grey (<code>RGB(60, 65, 75)</code>):</strong> Letter does not exist in the target word.</li>\n\n</ul>\n\n<p>In addition to tile feedback, the application maintains a live virtual keyboard matrix (A to Z) that tracks the highest-known feedback state for every letter in the alphabet, preventing redundant guess attempts.</p>\n\n<h3>Theoretical Mechanics</h3>\n\n<p>A common flaw in naive Wordle implementations is incorrect handling of duplicate letters. For instance, if the target word is <code>CRANE</code> (one 'E') and the player guesses <code>EAGLE</code> (two 'E's), a naive left-to-right check might mark both 'E's as yellow or green.</p>\n\n<p>To enforce exact game rules, <code>cpp-core</code> implements a deterministic <strong>Two-Pass Algorithm</strong>:</p>\n\n<ol>\n\n  <li><strong>Frequency Mapping:</strong> Construct a frequency count map of all characters in the secret target word.</li>\n\n  <li><strong>Pass 1 (Green / Correct Matches):</strong> Iterate through indices 0 to 4. If <code>guess[i] == secret[i]</code>, assign <code>LetterState::Correct</code> to index <code>i</code>, decrement the available frequency of <code>guess[i]</code> in the map, and update the global keyboard state for <code>guess[i]</code> to <code>CORRECT</code>.</li>\n\n  <li><strong>Pass 2 (Yellow / Present Matches & Grey / Absent):</strong> For all remaining unassigned indices <code>i</code>:</li>\n\n</ol>\n\n<p>-- If <code>secretFreq[guess[i]] &gt; 0</code>, assign <code>LetterState::Present</code> to index <code>i</code>, decrement <code>secretFreq[guess[i]]</code>, and update the keyboard state (if not already <code>CORRECT</code>).</p>\n\n<p>-- Otherwise, assign <code>LetterState::Absent</code> to index <code>i</code> and mark the keyboard state as <code>ABSENT</code> if previously unused.</p>\n",
+    "starterCode": "// 24_capstone_terminal_wordle.cpp\n#include <iostream>\n#include <string>\n#include <vector>\n#include <map>\n#include <cctype>\n#include <algorithm>\n\nnamespace WordleUI {\n    const std::string RESET     = \"\u001b[0m\";\n    const std::string BOLD      = \"\u001b[1m\";\n    const std::string GREEN_BG  = \"\u001b[48;2;40;180;90;38;2;255;255;255;1m\";\n    const std::string YELLOW_BG = \"\u001b[48;2;220;180;30;38;2;10;10;10;1m\";\n    const std::string GREY_BG   = \"\u001b[48;2;60;65;75;38;2;220;220;220m\";\n\n    std::string toUpper(std::string s) {\n        for (char& c : s) {\n            c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));\n        }\n        return s;\n    }\n}\n\nenum class LetterState { UNUSED, ABSENT, PRESENT, CORRECT };\n\nvoid printKeyboard(const std::map<char, LetterState>& kb) {\n    std::cout << \"\nRemaining Keyboard Matrix:\n\";\n    for (char c = 'A'; c <= 'Z'; ++c) {\n        auto it = kb.find(c);\n        LetterState state = (it != kb.end()) ? it->second : LetterState::UNUSED;\n        if (state == LetterState::CORRECT) {\n            std::cout << \"\u001b[38;2;40;220;120;1m\" << c << \" \" << WordleUI::RESET;\n        } else if (state == LetterState::PRESENT) {\n            std::cout << \"\u001b[38;2;240;200;60;1m\" << c << \" \" << WordleUI::RESET;\n        } else if (state == LetterState::ABSENT) {\n            std::cout << \"\u001b[38;2;90;90;100m\" << c << \" \" << WordleUI::RESET;\n        } else {\n            std::cout << \"\u001b[38;2;200;210;225m\" << c << \" \" << WordleUI::RESET;\n        }\n        if (c == 'M') std::cout << \"\n\";\n    }\n    std::cout << \"\n\n\";\n}\n\nint main() {\n    const std::string secretWord = \"CRANE\";\n    const int maxAttempts = 6;\n    int attempts = 0;\n    bool won = false;\n    std::map<char, LetterState> keyboard;\n\n    std::cout << WordleUI::BOLD << \"\u001b[38;2;100;220;255m\"\n              << \"========================================\n\"\n              << \"          C++ TERMINAL WORDLE           \n\"\n              << \"========================================\n\" << WordleUI::RESET;\n    std::cout << \"Guess the 5-letter secret word in 6 tries!\n\n\";\n\n    std::vector<std::string> demoGuesses = {\"PLANT\", \"DRAKE\", \"CRANE\"};\n\n    for (const auto& rawGuess : demoGuesses) {\n        if (won || attempts >= maxAttempts) break;\n        std::string guess = WordleUI::toUpper(rawGuess);\n        if (guess.length() != 5) continue;\n\n        attempts++;\n        std::vector<int> feedback(5, 0); // 0: ABSENT, 1: PRESENT, 2: CORRECT\n        std::map<char, int> secretFreq;\n        for (char c : secretWord) {\n            secretFreq[c]++;\n        }\n\n        // Pass 1: Identify exact Green matches\n        for (int i = 0; i < 5; ++i) {\n            if (guess[i] == secretWord[i]) {\n                feedback[i] = 2;\n                secretFreq[guess[i]]--;\n                keyboard[guess[i]] = LetterState::CORRECT;\n            }\n        }\n\n        // Pass 2: Identify Yellow matches and Grey absents\n        for (int i = 0; i < 5; ++i) {\n            if (feedback[i] == 2) continue;\n            if (secretFreq[guess[i]] > 0) {\n                feedback[i] = 1;\n                secretFreq[guess[i]]--;\n                if (keyboard[guess[i]] != LetterState::CORRECT) {\n                    keyboard[guess[i]] = LetterState::PRESENT;\n                }\n            } else {\n                if (keyboard.find(guess[i]) == keyboard.end() || keyboard[guess[i]] == LetterState::UNUSED) {\n                    keyboard[guess[i]] = LetterState::ABSENT;\n                }\n            }\n        }\n\n        std::cout << \"Attempt \" << attempts << \"/\" << maxAttempts << \": \";\n        for (int i = 0; i < 5; ++i) {\n            if (feedback[i] == 2) {\n                std::cout << WordleUI::GREEN_BG << \" \" << guess[i] << \" \" << WordleUI::RESET << \" \";\n            } else if (feedback[i] == 1) {\n                std::cout << WordleUI::YELLOW_BG << \" \" << guess[i] << \" \" << WordleUI::RESET << \" \";\n            } else {\n                std::cout << WordleUI::GREY_BG << \" \" << guess[i] << \" \" << WordleUI::RESET << \" \";\n            }\n        }\n        std::cout << \"\n\";\n\n        if (guess == secretWord) {\n            won = true;\n            break;\n        }\n    }\n\n    printKeyboard(keyboard);\n\n    if (won) {\n        std::cout << \"\u001b[38;2;255;215;0;1mCORRECT! Solved in \" << attempts << \" attempts!\u001b[0m\n\";\n    } else {\n        std::cout << \"Game Over. The secret word was: \" << secretWord << \"\n\";\n    }\n\n    return 0;\n}",
+    "explanation": "1. **Scoped Enumeration (`enum class LetterState`):** Enforces strong type safety when tracking tile states (`UNUSED`, `ABSENT`, `PRESENT`, `CORRECT`).\n2. **Associative Mapping (`std::map<char, int>`):** Tracks character frequencies for the two-pass algorithm and stores the keyboard matrix state.\n3. **ANSI TrueColor Output (`\u001b[48;2;R;G;Bm`):** Directs 24-bit RGB escape sequences into `std::cout` for color-coded background blocks.",
+    "quiz": {
+      "question": "What role is served by the `enum class LetterState` in this capstone?",
+      "options": [
+        "Storing user input strings",
+        "Providing a type-safe enumeration for tile feedback states",
+        "Managing terminal cursor movement",
+        "Compiling word dictionary files"
+      ],
+      "answer": 1,
+      "explanation": "Scoped enums supply type-safe representations for letter validation states."
+    },
+    "fillBlank": {
+      "instructions": "Complete the enum definition for letter validation states:",
+      "codeTemplate": "___1___ class LetterState {\n    Absent,\n    Present,\n    Correct\n};",
+      "blanks": [
+        {
+          "id": 1,
+          "answer": "enum",
+          "hint": "C++ keyword defining an enumeration type"
+        }
+      ]
+    }
+  },
+  {
+    "id": "53-2d-vectors-and-normalisation",
+    "category": "Capstone Applications",
+    "fileSlug": "53_2d_vectors_and_normalisation",
+    "title": "53. 2D Vectors, Dynamic Grids & Data Normalisation",
+    "summary": "Manage dynamic two-dimensional vector grids and normalize raw numeric dataset ranges into normalized 0.0 to 1.0 ranges.",
+    "cBridge": "In C, dynamic 2D matrices required manual pointer-to-pointer allocations (`int **matrix = malloc(...)`) and loops for `free()`. In C++, `std::vector<std::vector<T>>` handles dynamic memory allocation and deallocation automatically.",
+    "content": "\n<h3>Dynamic Grids with Nested Vectors</h3>\n\n<p>A dynamic 2D grid is instantiated as <code>std::vector&lt;std::vector&lt;double&gt;&gt; grid(rows, std::vector&lt;double&gt;(cols, initialValue))</code>.</p>\n\n<h3>Data Normalisation Formula</h3>\n\n<p>Data normalisation maps arbitrary raw numeric datasets into normalized $[0.0, 1.0]$ floating-point ranges:</p>\n\n<p>$$N = \\frac{x - x_{\\min}}{x_{\\max} - x_{\\min}}$$</p>\n\n<p>Normalisation allows raw topological elevation numbers to map cleanly onto colour gradient heat maps.</p>\n",
+    "starterCode": "// 25_2d_vectors_and_normalization.cpp\n#include <iostream>\n#include <vector>\n#include <algorithm>\n\nint main() {\n    std::vector<std::vector<double>> rawGrid{\n        {100.0, 250.0, 400.0},\n        {50.0,  300.0, 500.0}\n    };\n\n    double minVal = rawGrid[0][0];\n    double maxVal = rawGrid[0][0];\n\n    for (const auto& row : rawGrid) {\n        for (double val : row) {\n            minVal = std::min(minVal, val);\n            maxVal = std::max(maxVal, val);\n        }\n    }\n\n    std::cout << \"Min: \" << minVal << \", Max: \" << maxVal << \"\\nNormalised Grid:\\n\";\n\n    for (const auto& row : rawGrid) {\n        for (double val : row) {\n            double norm = (val - minVal) / (maxVal - minVal);\n            std::cout << norm << \"\\t\";\n        }\n        std::cout << \"\\n\";\n    }\n\n    return 0;\n}",
+    "explanation": "The program scans the dynamic 2D vector grid to determine `minVal` ($50.0$) and `maxVal` ($500.0$). It applies the normalisation formula, yielding floating-point values between $0.0$ and $1.0$.",
+    "quiz": {
+      "question": "What value is produced when normalising raw value $x = 300.0$ in range $[100.0, 500.0]$?",
+      "options": [
+        "`0.25`",
+        "`0.50`",
+        "`0.75`",
+        "`1.00`"
+      ],
+      "answer": 1,
+      "explanation": "$\\frac{300 - 100}{500 - 100} = \\frac{200}{400} = 0.50$."
+    },
+    "fillBlank": {
+      "instructions": "Complete the dynamic 2D vector instantiation for a grid with 5 rows and 10 columns initialised to 0.0:",
+      "codeTemplate": "#include <vector>\n\nint rows{5}, cols{10};\nstd::vector<std::___1___<double>> grid(rows, std::vector<double>(cols, 0.0));",
+      "blanks": [
+        {
+          "id": 1,
+          "answer": "vector",
+          "hint": "Standard STL dynamic container template"
+        }
+      ]
+    }
+  },
+  {
+    "id": "54-capstone-elevation-heatmap",
+    "category": "Capstone Applications",
+    "fileSlug": "54_capstone_elevation_heatmap",
+    "title": "54. Capstone 2: 2D Elevation Heat Map Renderer",
+    "summary": "Render 2D topographic terrain elevation datasets as coloured ANSI TrueColor heat maps in the terminal.",
+    "cBridge": "This capstone combines 2D dynamic vector grids, mathematical range normalisation, and ANSI RGB TrueColor rendering to display topographic data graphically in the terminal.",
+    "content": "\n<h3>Overview & Blueprint</h3>\n\n<p>The 2D Elevation Heat Map Renderer is a high-density raster topographic visualiser. It processes dynamic 2D numerical elevation grids (such as topographical matrix measurements) and maps raw values onto a multi-stop spectral color gradient rendered in the terminal.</p>\n\n<p>Features include:</p>\n\n<ul>\n\n  <li><strong>Dynamic 2D Vector Grids (<code>std::vector&lt;std::vector&lt;int&gt;&gt;</code>):</strong> Flexible, memory-safe grid representation.</li>\n\n  <li><strong>Automatic Range Normalisation:</strong> Linear interpolation mapping arbitrary height ranges ($[E_{\\min}, E_{\\max}]$) to an 8-bit scale ($[0, 255]$).</li>\n\n  <li><strong>Sea-Level Baseline Masking:</strong> Automatic detection and oceanic blue tinting for values at or below sea level ($E \\le 0$).</li>\n\n  <li><strong>Square Aspect Ratio Formatting:</strong> Double-space terminal output (<code>\"  \"</code>) compensates for monospace rectangular character cell dimensions (1:2 aspect ratio).</li>\n\n</ul>\n\n<h3>Theoretical Mechanics</h3>\n\n<h3>Linear Data Normalisation</h3>\n\n<p>Given a raw elevation value $x$ in a dataset bounded by minimum $E_{\\min}$ and maximum $E_{\\max}$, the normalized floating-point intensity $I \\in [0.0, 1.0]$ is calculated as:</p>\n\n<p>$$I = \frac{x -- E_{\\min}}{E_{\\max} -- E_{\\min}}$$</p>\n\n<p>To prevent division by zero, if $E_{\\max} == E_{\\min}$, the range is clamped to 1.</p>\n\n<h3>Multi-Segment Spectral Color Gradient</h3>\n\n<p>The normalized index $N = \\lfloor I \times 255 \rfloor \\in [0, 255]$ is expanded across five linear RGB color transitions ($S = N \times 5 \\in [0, 1275]$):</p>\n\n<ul>\n\n  <li>$S \\in [0, 255]$: Navy to Cyan ($R=255, G=S, B=0$)</li>\n\n  <li>$S \\in [256, 510]$: Cyan to Green ($R=510-S, G=255, B=0$)</li>\n\n  <li>$S \\in [511, 765]$: Green to Yellow ($R=0, G=255, B=S-510$)</li>\n\n  <li>$S \\in [766, 1020]$: Yellow to Orange ($R=0, G=1020-S, B=255$)</li>\n\n  <li>$S \\in [1021, 1275]$: Orange to Violet ($R=S-1020, G=0, B=255$)</li>\n\n</ul>\n",
+    "starterCode": "// 26_capstone_elevation_heatmap.cpp\n#include <iostream>\n#include <vector>\n#include <cmath>\n#include <algorithm>\n\nvoid printRainbowPixel(int val) {\n    if (val < 0) {\n        // Ocean / Sea-level background (Deep Oceanic Navy)\n        std::cout << \"\u001b[48;2;10;15;35m  \u001b[0m\";\n        return;\n    }\n    int scaled = val * 5;\n    int r = 0, g = 0, b = 0;\n    if (scaled <= 255) {\n        r = 255; g = scaled; b = 0;\n    } else if (scaled <= 510) {\n        r = 510 -- scaled; g = 255; b = 0;\n    } else if (scaled <= 765) {\n        r = 0; g = 255; b = scaled -- 510;\n    } else if (scaled <= 1020) {\n        r = 0; g = 1020 -- scaled; b = 255;\n    } else {\n        r = scaled -- 1020; g = 0; b = 255;\n    }\n    std::cout << \"\u001b[48;2;\" << r << \";\" << g << \";\" << b << \"m  \u001b[0m\";\n}\n\nvoid renderMap(const std::vector<std::vector<int>>& grid, bool useSeaLevel = true) {\n    if (grid.empty() || grid[0].empty()) return;\n    int rows = grid.size();\n    int cols = grid[0].size();\n\n    int minVal = grid[0][0];\n    int maxVal = grid[0][0];\n\n    for (const auto& row : grid) {\n        for (int cell : row) {\n            if (cell < minVal) minVal = cell;\n            if (cell > maxVal) maxVal = cell;\n        }\n    }\n\n    int baseline = useSeaLevel ? std::max(0, minVal) : minVal;\n    int range = std::max(1, maxVal -- baseline);\n\n    std::cout << \"\nTopography Render (\" << cols << \"x\" << rows << \") | Peak: \" << maxVal\n              << \"m | Min: \" << minVal << \"m | Range: \" << range << \"m\n\n\";\n\n    for (int r = 0; r < rows; ++r) {\n        for (int c = 0; c < cols; ++c) {\n            int cell = grid[r][c];\n            if (useSeaLevel && cell <= 0) {\n                printRainbowPixel(-1);\n                continue;\n            }\n            int norm = std::clamp((cell -- baseline) * 255 / range, 0, 255);\n            printRainbowPixel(norm);\n        }\n        std::cout << \"\n\";\n    }\n}\n\nint main() {\n    std::cout << \"=== 2D ELEVATION HEAT MAP RENDERER ===\n\";\n    const int R = 12, C = 20;\n    std::vector<std::vector<int>> island(R, std::vector<int>(C, 0));\n    double cR = R / 2.0;\n    double cC = C / 2.0;\n\n    // Generate procedural island elevation data\n    for (int r = 0; r < R; ++r) {\n        for (int c = 0; c < C; ++c) {\n            double dist = std::sqrt((r -- cR) * (r -- cR) + (c -- cC) * (c -- cC));\n            island[r][c] = static_cast<int>(3500.0 -- dist * 450.0);\n        }\n    }\n\n    renderMap(island, true);\n\n    std::cout << \"\nLegend: Dark Blue = Ocean, Red/Green = Lowlands, Violet = Peak Summit\n\";\n    return 0;\n}",
+    "explanation": "1. **Dynamic Grid Storage:** Nested vectors allow runtime allocation of 2D data grids without manual pointer management (`malloc`/`free`).\n2. **Bounds Checking & Clamping:** `std::clamp` guarantees normalized color indices stay bounded inside $[0, 255]$.\n3. **Monospace Aspect Ratio Compensation:** Monospace characters are roughly twice as tall as they are wide. Outputting double spaces (`\"  \"`) produces perfectly square display pixels on terminal canvases.",
+    "quiz": {
+      "question": "In a linear blue-to-red elevation heat map gradient, what RGB color is generated for normalised elevation `0.0`?",
+      "options": [
+        "`RGB(255, 0, 0)` (Red)",
+        "`RGB(0, 0, 255)` (Blue)",
+        "`RGB(0, 255, 0)` (Green)",
+        "`RGB(255, 255, 255)` (White)"
+      ],
+      "answer": 1,
+      "explanation": "At `val = 0.0`, `r = 0` and `b = 255`, yielding pure blue."
+    },
+    "fillBlank": {
+      "instructions": "Complete the cast operation converting normalised float values to integer RGB color components:",
+      "codeTemplate": "double normVal = 0.75;\nint redComponent = ___1___<int>(normVal * 255);",
+      "blanks": [
+        {
+          "id": 1,
+          "answer": "static_cast",
+          "hint": "Modern C++ explicit type conversion operator"
+        }
+      ]
+    }
+  },
+  {
+    "id": "55-sets-maps-and-bit-manipulation",
+    "category": "Capstone Applications",
+    "fileSlug": "55_sets_maps_and_bit_manipulation",
+    "title": "55. Sets, Maps & Binary Minterm Generation",
+    "summary": "Master associative containers std::set and std::map, and manipulate binary minterm bitmasks.",
+    "cBridge": "In C, unique collections and key-value lookups required building hash tables or red-black trees manually. C++ supplies associative containers `std::set` and `std::map` in the standard library.",
+    "content": "\n<h3>Standard Associative Containers</h3>\n\n<ul>\n\n  <li><strong><code>std::set&lt;T&gt;</code>:</strong> Stores unique elements sorted automatically in logarithmic time $O(\\log N)$. Duplicate insertions are ignored.</li>\n\n  <li><strong><code>std::map&lt;Key, Value&gt;</code>:</strong> Stores unique key-value pairs sorted by key. Subscript lookup (<code>map[key]</code>) retrieves or inserts key entries.</li>\n\n</ul>\n\n<h3>Bitwise Operators & Binary Minterm Generation</h3>\n\n<p>Bitwise operators perform direct binary operations: <code>&amp;</code> (AND), <code>|</code> (OR), <code>^</code> (XOR), <code>~</code> (NOT), <code>&lt;&lt;</code> (left shift), and <code>&gt;&gt;</code> (right shift). Bit shifts generate binary minterms ($2^N$ truth combinations) for boolean functions.</p>\n",
+    "starterCode": "// 27_sets_maps_and_bit_manipulation.cpp\n#include <iostream>\n#include <set>\n#include <map>\n\nint main() {\n    std::set<int> uniqueMinterms{1, 3, 3, 5, 7};\n    std::cout << \"Unique minterms count: \" << uniqueMinterms.size() << \"\\n\";\n\n    std::map<std::string, int> truthTable;\n    truthTable[\"00\"] = 0;\n    truthTable[\"01\"] = 1;\n    truthTable[\"10\"] = 1;\n    truthTable[\"11\"] = 0;\n\n    for (const auto& [input, output] : truthTable) {\n        std::cout << \"Input: \" << input << \" -> Output: \" << output << \"\\n\";\n    }\n\n    return 0;\n}",
+    "explanation": "`std::set` ignores duplicate `3`. Structured binding (`auto [input, output]`) iterates over key-value entries in `truthTable` in sorted order.",
+    "quiz": {
+      "question": "What is the time complexity for element insertion in an `std::set`?",
+      "options": [
+        "$O(1)$",
+        "$O(\\log N)$",
+        "$O(N)$",
+        "$O(N^2)$"
+      ],
+      "answer": 1,
+      "explanation": "`std::set` is implemented as a balanced self-balancing search tree, yielding $O(\\log N)$ search and insertion bounds."
+    },
+    "fillBlank": {
+      "instructions": "Complete the bitwise left shift operation computing $2^N$ minterm count for $N = 3$ variables:",
+      "codeTemplate": "int numVars = 3;\nint numRows = 1 ___1___ numVars; // Evaluates 1 << 3 = 8",
+      "blanks": [
+        {
+          "id": 1,
+          "answer": "<<",
+          "hint": "Bitwise left-shift operator"
+        }
+      ]
+    }
+  },
+  {
+    "id": "56-capstone-boolean-evaluator",
+    "category": "Capstone Applications",
+    "fileSlug": "56_capstone_boolean_evaluator",
+    "title": "56. Capstone 3: Boolean Algebra Evaluator & Truth Tables",
+    "summary": "Parse boolean expressions and generate automated truth tables for digital logic expressions.",
+    "cBridge": "This capstone combines dynamic stack evaluation, `std::string` processing, and associative map variable lookups to construct a boolean expression evaluator.",
+    "content": "\n<h3>Overview & Blueprint</h3>\n\n<p>The Boolean Algebra Evaluator parses symbolic digital logic expressions and generates automated $2^N$ truth tables. It discovers unique boolean variables, substitutes truth values across all minterms, evaluates logical operators with correct precedence, and verifies whether two distinct expressions are mathematically equivalent.</p>\n\n<p>Supported Boolean Operators:</p>\n\n<ul>\n\n  <li><strong>Parentheses (<code>( )</code>):</strong> Explicit operator grouping and precedence override.</li>\n\n  <li><strong>NOT (<code>!</code> or <code>'</code>):</strong> Logical negation / inversion.</li>\n\n  <li><strong>AND (<code>&amp;</code> or <code>*</code> or implicit juxtaposition <code>AB</code>):</strong> Logical conjunction.</li>\n\n  <li><strong>XOR (<code>^</code>):</strong> Logical exclusive OR.</li>\n\n  <li><strong>OR (<code>+</code> or <code>|</code>):</strong> Logical disjunction.</li>\n\n</ul>\n\n<h3>Theoretical Mechanics</h3>\n\n<ol>\n\n  <li><strong>Unique Variable Discovery:</strong> The expression string is scanned for alphabetic characters (<code>std::isalpha</code>). A <code>std::set&lt;char&gt;</code> aggregates unique variable identifiers in sorted alphabetical order.</li>\n\n  <li><strong>Variable Bit Indexing:</strong> A <code>std::map&lt;char, int&gt;</code> maps each discovered variable to a 0-indexed column position.</li>\n\n  <li><strong>Minterm Generation via Bitwise Shifts:</strong> For $N$ variables, there are $2^N$ minterms. The program iterates integer $i$ from $0$ to $2^N -- 1$. The truth value of variable $k$ at row $i$ is extracted via bitwise shifting:</li>\n\n</ol>\n\n<p>$$\text{val}_k = \\left( \frac{i}{2^{N -- 1 -- k}} \right) \\pmod 2 = (i \\gg (N -- 1 -- k)) \\ \\& \\ 1$$</p>\n\n<ol>\n\n  <li><strong>Recursive Substring Evaluation:</strong> Parenthesized expressions are evaluated from the innermost sub-expression outward using recursive string substitution.</li>\n\n</ol>\n",
+    "starterCode": "// 28_capstone_boolean_evaluator.cpp\n#include <iostream>\n#include <string>\n#include <set>\n#include <map>\n#include <cctype>\n#include <algorithm>\n\nnamespace BooleanLogic {\n    char evalFlat(std::string s) {\n        // Pass 1: Handle NOT operators (' or !)\n        for (size_t i = 0; i < s.length(); ++i) {\n            if (s[i] == ''' && i > 0) {\n                s[i -- 1] = (s[i -- 1] == '1') ? '0' : '1';\n                s.erase(i, 1);\n                --i;\n            } else if (s[i] == '!' && i + 1 < s.length()) {\n                s[i + 1] = (s[i + 1] == '1') ? '0' : '1';\n                s.erase(i, 1);\n                --i;\n            }\n        }\n\n        // Pass 2: Handle AND operators (*, &, or implicit concatenation)\n        for (int i = static_cast<int>(s.length()) -- 1; i > 0; --i) {\n            if (s[i] == '*' || s[i] == '&' || s[i] == '.') {\n                s[i -- 1] = (s[i -- 1] == '1' && s[i + 1] == '1') ? '1' : '0';\n                s.erase(i, 2);\n            } else if ((s[i] == '1' || s[i] == '0') && (s[i -- 1] == '1' || s[i -- 1] == '0')) {\n                s[i -- 1] = (s[i -- 1] == '1' && s[i] == '1') ? '1' : '0';\n                s.erase(i, 1);\n            }\n        }\n\n        // Pass 3: Handle XOR operators (^)\n        for (int i = static_cast<int>(s.length()) -- 1; i > 0; --i) {\n            if (s[i] == '^') {\n                s[i -- 1] = (s[i -- 1] != s[i + 1]) ? '1' : '0';\n                s.erase(i, 2);\n            }\n        }\n\n        // Pass 4: Handle OR operators (+ or |)\n        for (int i = static_cast<int>(s.length()) -- 1; i > 0; --i) {\n            if (s[i] == '+' || s[i] == '|') {\n                s[i -- 1] = (s[i -- 1] == '1' || s[i + 1] == '1') ? '1' : '0';\n                s.erase(i, 2);\n            }\n        }\n\n        return s.empty() ? '0' : s[0];\n    }\n\n    char eval(std::string s) {\n        while (s.find('(') != std::string::npos) {\n            size_t cp = s.find(')');\n            size_t op = s.rfind('(', cp);\n            std::string sub = s.substr(op + 1, cp -- op -- 1);\n            char r = eval(sub);\n            s.replace(op, cp -- op + 1, 1, r);\n        }\n        return evalFlat(s);\n    }\n\n    std::string substitute(std::string expr, const std::string& bin, const std::map<char, int>& vm) {\n        for (size_t i = 0; i < expr.length(); ++i) {\n            if (std::isalpha(static_cast<unsigned char>(expr[i]))) {\n                expr[i] = bin[vm.at(expr[i])];\n            }\n        }\n        return expr;\n    }\n}\n\nint main() {\n    std::cout << \"=== BOOLEAN ALGEBRA EQUIVALENCE PROVER ===\n\n\";\n    std::string f1 = \"A(B + C)\";\n    std::string f2 = \"AB + AC\";\n    std::cout << \"Expression 1 (F1): \" << f1 << \"\n\";\n    std::cout << \"Expression 2 (F2): \" << f2 << \"\n\n\";\n\n    std::set<char> vars;\n    for (char c : f1 + f2) {\n        if (std::isalpha(static_cast<unsigned char>(c))) vars.insert(c);\n    }\n\n    std::map<char, int> vm;\n    int idx = 0;\n    for (char v : vars) vm[v] = idx++;\n\n    int n = vars.size();\n    int total = 1 << n;\n    bool equivalent = true;\n\n    std::cout << \" \";\n    for (char v : vars) std::cout << v << \" \";\n    std::cout << \"| F1 | F2 | Match?\n\";\n    std::cout << \"----+----+----+--------\n\";\n\n    for (int i = 0; i < total; ++i) {\n        std::string bin = \"\";\n        for (int j = n -- 1; j >= 0; --j) {\n            bin += ((i >> j) & 1) ? '1' : '0';\n        }\n\n        char o1 = BooleanLogic::eval(BooleanLogic::substitute(f1, bin, vm));\n        char o2 = BooleanLogic::eval(BooleanLogic::substitute(f2, bin, vm));\n        bool match = (o1 == o2);\n        if (!match) equivalent = false;\n\n        std::cout << \" \";\n        for (int j = 0; j < n; ++j) std::cout << bin[j] << \" \";\n        std::cout << \"|  \" << o1 << \" |  \" << o2 << \" |   \" << (match ? \"YES\" : \"NO\") << \"\n\";\n    }\n\n    std::cout << \"\nResult: \" << (equivalent ? \"EQUIVALENT (Distributive Law Holds)\" : \"NOT EQUIVALENT\") << \"\n\";\n    return 0;\n}",
+    "explanation": "1. **Associative Set (`std::set<char>`):** Extracts unique variables from formulas and keeps them sorted automatically.\n2. **Bitwise Shift Minterm Generation (`1 << N`):** Calculates powers of 2 ($2^N$) and bitwise shifts (`(i >> j) & 1`) to generate truth table input rows cleanly.\n3. **Recursive String Reduction:** Resolves nested parenthesized expressions prior to operator precedence passes.",
+    "quiz": {
+      "question": "How many total rows exist in a truth table for a boolean expression containing $N = 4$ distinct variables?",
+      "options": [
+        "`8`",
+        "`16`",
+        "`32`",
+        "`64`"
+      ],
+      "answer": 1,
+      "explanation": "Total truth table rows equal $2^N = 2^4 = 16$."
+    },
+    "fillBlank": {
+      "instructions": "Complete the bitwise check extracting the binary bit at position 0:",
+      "codeTemplate": "int minterm = 3; // Binary 11\nbool varB = (minterm ___1___ 1) != 0; // Bitwise AND check",
+      "blanks": [
+        {
+          "id": 1,
+          "answer": "&",
+          "hint": "Bitwise AND operator"
+        }
+      ]
+    }
+  },
+  {
+    "id": "57-gray-code-and-karnaugh-maps",
+    "category": "Capstone Applications",
+    "fileSlug": "57_gray_code_and_karnaugh_maps",
+    "title": "57. Gray Code & Karnaugh Map Fundamentals",
+    "summary": "Understand Gray code sequences, single-bit adjacency transitions, and Karnaugh map (K-Map) reduction grids.",
+    "cBridge": "Gray code conversion uses bitwise binary transformations (`binary ^ (binary >> 1)`), providing $O(1)$ conversions between standard binary and Gray code numbers.",
+    "content": "\n<h3>Gray Code Sequences</h3>\n\n<p>Gray code is a binary numeral system where two successive values differ in only a single bit position. Standard binary sequences ($00, 01, 10, 11$) alter two bits when transitioning from $01$ to $10$. Gray code sequences ($00, 01, 11, 10$) enforce single-bit adjacency.</p>\n\n<h3>Binary to Gray Code Conversion</h3>\n\n<p>$$G = B \\oplus (B \\gg 1)$$</p>\n\n<p>Where $\\oplus$ represents bitwise XOR (<code>^</code>) and $\\gg$ represents right bit shift (<code>&gt;&gt;</code>).</p>\n\n<h3>Karnaugh Map (K-Map) Layout</h3>\n\n<p>K-Maps arrange boolean minterm truth cells into 2D grids using Gray code row/column headers, enabling visual boolean minimization.</p>\n",
+    "starterCode": "// 29_gray_code_and_karnaugh_maps.cpp\n#include <iostream>\n\nunsigned int binaryToGray(unsigned int num) {\n    return num ^ (num >> 1);\n}\n\nint main() {\n    std::cout << \"Binary to Gray Code Sequence (0 to 3):\\n\";\n    for (unsigned int i{0}; i < 4; ++i) {\n        unsigned int g = binaryToGray(i);\n        std::cout << \"Binary: \" << i << \" -> Gray: \" << g << \"\\n\";\n    }\n\n    return 0;\n}",
+    "explanation": "`binaryToGray` computes `num ^ (num >> 1)`. For $2$ (`10` in binary), $2 \\oplus (2 \\gg 1) = 2 \\oplus 1 = 3$ (`11` in Gray code), satisfying single-bit adjacency.",
+    "quiz": {
+      "question": "What property defines Gray code binary sequences?",
+      "options": [
+        "All values are prime numbers",
+        "Adjacent sequence numbers differ in exactly one single bit position",
+        "Values increment by 2",
+        "Numbers are stored in reverse"
+      ],
+      "answer": 1,
+      "explanation": "Gray code enforces single-bit adjacency between adjacent sequence values."
+    },
+    "fillBlank": {
+      "instructions": "Complete the bitwise XOR operation converting binary numbers into Gray code:",
+      "codeTemplate": "unsigned int bin = 2;\nunsigned int gray = bin ___1___ (bin >> 1);",
+      "blanks": [
+        {
+          "id": 1,
+          "answer": "^",
+          "hint": "Bitwise XOR operator"
+        }
+      ]
+    }
+  },
+  {
+    "id": "58-capstone-kmap-visualiser",
+    "category": "Capstone Applications",
+    "fileSlug": "58_capstone_kmap_visualiser",
+    "title": "58. Capstone 4: Interactive Karnaugh Map Visualiser",
+    "summary": "Render interactive Karnaugh Maps (K-Maps) in the terminal with Gray code coordinate headers and visual grouping.",
+    "cBridge": "This capstone combines Gray code sequencing, 2D vector grids, and ANSI color formatting to render interactive 2D Karnaugh Maps in the terminal.",
+    "content": "\n<h3>Overview & Blueprint</h3>\n\n<p>The Interactive Karnaugh Map (K-Map) Visualiser bridges software boolean expression evaluation with hardware digital logic minimization. It transforms truth table outputs into 2D Karnaugh map matrices indexed by Gray code headers.</p>\n\n<p>Features:</p>\n\n<ul>\n\n  <li><strong>2, 3, and 4-Variable K-Map Support:</strong> Supports 4x4 grids representing 16 minterms ($m_0$ to $m_{15}$).</li>\n\n  <li><strong>Gray Code Matrix Layout:</strong> Row and column coordinates follow Gray code sequences (<code>00</code>, <code>01</code>, <code>11</code>, <code>10</code>) to guarantee single-bit Hamming distance adjacency.</li>\n\n  <li><strong>ANSI TrueColor Grid Formatting:</strong> High-contrast color blocks highlighting active minterm cells (<code>1</code> vs <code>0</code>).</li>\n\n</ul>\n\n<h3>Theoretical Mechanics</h3>\n\n<h3>Why Gray Code Is Required</h3>\n\n<p>In standard binary counting (<code>00, 01, 10, 11</code>), transitioning from <code>01</code> to <code>10</code> flips two bits simultaneously. In digital logic minimization, adjacent K-map cells must differ by exactly <strong>one</strong> binary variable (Hamming distance = 1). The Gray code sequence (<code>00, 01, 11, 10</code>) enforces single-bit adjacency across rows and columns.</p>\n\n<h3>4-Variable K-Map Index Mapping Matrix</h3>\n\n<p>A 4-variable K-Map (variables $A, B$ for rows and $C, D$ for columns) maps standard minterm indices ($m_0$ to $m_{15}$) into the following Gray code grid:</p>\n\n<p>| AB \\ CD | 00 | 01 | 11 | 10 |</p>\n\n<p>| :--- | :---: | :---: | :---: | :---: |</p>\n\n<p>| <strong>00</strong> | $m_0$ | $m_1$ | $m_3$ | $m_2$ |</p>\n\n<p>| <strong>01</strong> | $m_4$ | $m_5$ | $m_7$ | $m_6$ |</p>\n\n<p>| <strong>11</strong> | $m_{12}$ | $m_{13}$ | $m_{15}$ | $m_{14}$ |</p>\n\n<p>| <strong>10</strong> | $m_8$ | $m_9$ | $m_{11}$ | $m_{10}$ |</p>\n",
+    "starterCode": "// 30_capstone_kmap_visualiser.cpp\n#include <iostream>\n#include <vector>\n#include <string>\n\nstd::string formatKCell(char val) {\n    if (val == '1') {\n        // Bright illuminated cell (Active minterm 1)\n        return \"\u001b[48;2;240;248;255;38;2;10;10;10;1m  1  \u001b[0m\";\n    } else if (val == '0') {\n        // Dark contrast cell (Inactive minterm 0)\n        return \"\u001b[48;2;25;30;40;38;2;140;150;165m  0  \u001b[0m\";\n    }\n    // Don't care cell (?)\n    return \"\u001b[48;2;80;85;95;38;2;240;240;240m  ?  \u001b[0m\";\n}\n\nvoid printKMap4(const std::string& truth, const std::vector<char>& vars) {\n    // 4x4 Gray code index permutation matrix\n    int map[4][4] = {\n        { 0,  1,  3,  2},\n        { 4,  5,  7,  6},\n        {12, 13, 15, 14},\n        { 8,  9, 11, 10}\n    };\n    std::string rowLabels[] = {\"00\", \"01\", \"11\", \"10\"};\n\n    std::cout << \"\n\u001b[38;2;100;220;255;1mK-Map Visualiser (\"\n              << vars[0] << vars[1] << \" \\ \" << vars[2] << vars[3] << \")\u001b[0m\n\n\";\n    std::cout << \"       \" << vars[2] << vars[3] << \": 00    01    11    10\n\";\n    std::cout << \"   \" << vars[0] << vars[1] << \" +--------------------------\n\";\n\n    for (int r = 0; r < 4; ++r) {\n        std::cout << \"    \" << rowLabels[r] << \" | \";\n        for (int c = 0; c < 4; ++c) {\n            int idx = map[r][c];\n            char bit = (idx < static_cast<int>(truth.size())) ? truth[idx] : '0';\n            std::cout << formatKCell(bit) << \" \";\n        }\n        std::cout << \"\n\";\n    }\n    std::cout << \"\n\";\n}\n\nint main() {\n    std::cout << \"\u001b[38;2;100;220;255;1m\"\n              << \"=== KARNAUGH MAP (K-MAP) VISUALISER ===\n\u001b[0m\";\n\n    // Truth vector for F = D (all odd minterm indices are 1)\n    std::string truth = \"0101010101010101\";\n    std::vector<char> vars = {'A', 'B', 'C', 'D'};\n\n    std::cout << \"Input Bitstream: \" << truth << \"\n\";\n    std::cout << \"Active Minterms: m1, m3, m5, m7, m9, m11, m13, m15\n\";\n\n    printKMap4(truth, vars);\n\n    std::cout << \"\u001b[38;2;255;215;0;1mDigital Logic Minimisation: F = D\u001b[0m\n\";\n    std::cout << \"(Columns 01 and 11 form an 8-cell octet; variables A, B, and C cancel out)\n\";\n\n    return 0;\n}",
+    "explanation": "1. **Gray Code Coordinate Headers:** Renders K-maps using single-bit Hamming distance permutations (`00, 01, 11, 10`).\n2. **Minterm Mapping Array:** 2D lookup array `map[4][4]` maps truth table bit positions directly into visual K-map grid locations.\n3. **ANSI TrueColor Contrast Styling:** Applies custom background RGB codes to differentiate active minterms (`1`) from inactive cells (`0`).",
+    "quiz": {
+      "question": "Why are Gray code orderings (`00, 01, 11, 10`) required for K-Map row and column headers?",
+      "options": [
+        "To make grid sorting faster",
+        "To ensure adjacent visual cells differ by exactly one binary variable",
+        "To reduce memory usage",
+        "To enable 64-bit precision"
+      ],
+      "answer": 1,
+      "explanation": "Gray code headers ensure spatial visual cell adjacency corresponds to single-variable boolean differences."
+    },
+    "fillBlank": {
+      "instructions": "Complete the 2-bit Gray code header sequence vector:",
+      "codeTemplate": "#include <vector>\n#include <string>\n\nstd::vector<std::string> kmapHeaders{\"00\", \"01\", \"___1___\", \"10\"};",
+      "blanks": [
+        {
+          "id": 1,
+          "answer": "11",
+          "hint": "2-bit Gray code value following 01"
         }
       ]
     }

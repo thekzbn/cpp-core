@@ -90,58 +90,58 @@ Additional features include:
 22. ANSI Terminal Art & 24-Bit TrueColor
 23. STL Vectors & Modern Random Engines
 
-### Phase 6: Capstone Projects (Luis's Project Suite)
+### Phase 6: Extended Foundations & Practice
 
-24. Capstone 1: Terminal Wordle with TrueColor Themes
-25. 2D Vectors, Dynamic Grids & Data Normalisation
-26. Capstone 2: 2D Elevation Heat Map Renderer
-27. Sets, Maps & Binary Minterm Generation
-28. Capstone 3: Boolean Algebra Evaluator & Truth Tables
-29. Gray Code & Karnaugh Map Fundamentals
-30. Capstone 4: Interactive Karnaugh Map Visualiser
+24. Constants, Type Casting & Explicit Conversions
+25. Interactive BMI Calculator Project
+26. String Comparison & Advanced Member Methods
+27. Pass-by-Value vs Pass-by-Reference
+28. Exception Handling Mechanics (try, catch, throw)
+29. Interactive Grade Calculator with Input Validation
+30. Virtual Functions, Pure Interfaces & Polymorphism
+31. Interactive Bank Account System (OOP + Input)
+32. Pointers vs References Side-by-Side Comparison
+33. Interactive Word & Character Counter Utility
+34. Function Overloading & Name Mangling
+35. File I/O: Reading & Writing Files
 
-### Phase 7: Extended Foundations & Practice
+### Phase 7: Systems Architecture & Dynamic Memory
 
-31. Constants, Type Casting & Explicit Conversions
-32. Interactive BMI Calculator Project
-33. String Comparison & Advanced Member Methods
-34. Pass-by-Value vs Pass-by-Reference
-35. Exception Handling Mechanics (try, catch, throw)
-36. Interactive Grade Calculator with Input Validation
-37. Virtual Functions, Pure Interfaces & Polymorphism
-38. Interactive Bank Account System (OOP + Input)
-39. Pointers vs References Side-by-Side Comparison
-40. Interactive Word & Character Counter Utility
-41. Function Overloading & Name Mangling
-42. File I/O: Reading & Writing Files
+36. Scope, Storage Duration & Object Lifecycles
+37. Dynamic Memory Allocation (new / delete) & Stack vs Heap
 
-### Phase 8: Systems Architecture & Memory
+### Phase 8: Modern Standard Template Library (STL)
 
-43. Scope, Storage Duration & Object Lifecycles
-44. Dynamic Memory Allocation (new / delete) & Stack vs Heap
+38. Standard Template Library Sequence Containers (std::array & std::vector)
+39. Standard Template Library Associative Containers (std::map & std::unordered_map)
+40. Lambda Expressions, Closures & Captures
+41. Standard Algorithms & Iterator Mechanics
 
-### Phase 9: Modern Standard Template Library (STL)
+### Phase 9: Modern Memory, Safety & Generic Programming
 
-45. Standard Template Library Sequence Containers (std::array & std::vector)
-46. Standard Template Library Associative Containers (std::map & std::unordered_map)
-47. Lambda Expressions, Closures & Captures
-48. Standard Algorithms & Iterator Mechanics
+42. Smart Pointers (std::unique_ptr & std::shared_ptr) & RAII
+43. Function & Class Templates (Generic Programming)
+44. Move Semantics & Copy-vs-Move Operations
+45. Modern C++ Features: auto, range-for, std::optional & std::string_view
+46. Exception Safety Guarantees & RAII Resource Management
+47. Operator Overloading (Binary & Unary Operators)
+48. C++20 Concepts, Requirements & Type Traits
 
-### Phase 10: Modern Memory, Safety & Generic Programming
+### Phase 10: Advanced Systems Engineering
 
-49. Smart Pointers (std::unique_ptr & std::shared_ptr) & RAII
-50. Function & Class Templates (Generic Programming)
-51. Move Semantics & Copy-vs-Move Operations
-52. Modern C++ Features: auto, range-for, std::optional & std::string_view
-53. Exception Safety Guarantees & RAII Resource Management
-54. Operator Overloading (Binary & Unary Operators)
-55. C++20 Concepts, Requirements & Type Traits
+49. Concurrency & Multithreading (std::thread, std::async, std::mutex)
+50. Unit Testing Frameworks (Catch2 & GTest)
+51. Secure C++ Engineering, Buffer Overflow Avoidance & Code Hardening
 
-### Phase 11: Advanced Engineering
+### Phase 11: Culminating Capstone Applications Suite
 
-56. Concurrency & Multithreading (std::thread, std::async, std::mutex)
-57. Unit Testing Frameworks (Catch2 & GTest)
-58. Secure C++ Engineering, Buffer Overflow Avoidance & Code Hardening
+52. Capstone 1: Terminal Wordle with TrueColor Themes
+53. 2D Vectors, Dynamic Grids & Data Normalisation
+54. Capstone 2: 2D Elevation Heat Map Renderer
+55. Sets, Maps & Binary Minterm Generation
+56. Capstone 3: Boolean Algebra Evaluator & Truth Tables
+57. Gray Code & Karnaugh Map Fundamentals
+58. Capstone 4: Interactive Karnaugh Map Visualiser
 
 ## Execution architecture
 
