@@ -163,8 +163,8 @@ C++ Core supports three ways to run across Windows, macOS, and Linux:
 
 ### 1. Direct Web / Offline Mode (Any OS — Zero Install)
 You can open **`index.html`** directly in any web browser (Chrome, Firefox, Safari, Edge) on **Windows, macOS, or Linux**:
-- Requires **zero installations**, zero servers, and works 100% offline.
-- Runs all exercises and lessons using the built-in browser C++ simulator.
+- Requires no local server or compiler; lessons and supported examples run in the built-in browser simulator.
+- The page can be opened locally, but it references some external fonts and a logo, so a first load is not guaranteed to be fully offline. Browser simulation supports straightforward examples, not every C++ compiler behaviour.
 
 ---
 
